@@ -135,9 +135,9 @@ const Dashboard = () => {
                     <h3 className="font-medium mb-1 text-foreground">أمن تطبيقات الويب المتقدم</h3>
                     <p className="text-sm text-muted-foreground mb-2">آخر نشاط: الوحدة 3 - حقن SQL</p>
                     <div className="h-2 bg-muted rounded-full mb-2">
-                      <div className="h-2 bg-gradient-to-r from-teal-500 to-lime-500 rounded-full" style={{ width: '25%' }} />
+                      <div className="h-2 bg-gradient-to-r from-sky-500 to-green-500 rounded-full" style={{ width: '25%' }} />
                     </div>
-                    <Button className="mt-2 bg-gradient-to-r from-teal-500 to-lime-500 text-white hover:from-teal-600 hover:to-lime-600">متابعة التعلم</Button>
+                    <Button className="mt-2 bg-gradient-to-r from-sky-500 to-green-500 text-white hover:from-sky-600 hover:to-green-600">متابعة التعلم</Button>
                   </div>
                 </div>
               </div>
@@ -194,7 +194,7 @@ const Dashboard = () => {
             <div className="mb-8 animate-on-scroll">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold">دوراتي</h2>
-                <Button variant="ghost" size="sm" asChild>
+                <Button variant="ghost" size="sm" asChild className="hover:bg-[#00C896]/10 hover:text-[#00C896] transition-colors">
                   <Link to="/courses">
                     عرض جميع الدورات <ChevronLeft className="h-4 w-4 mr-1" />
                   </Link>

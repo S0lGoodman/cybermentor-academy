@@ -93,4 +93,4 @@ Future iterations may include access for mentors to contribute content and asses
 - **Navigation**
   - Sidebar with collapsible course structure
   - Breadcrumb navigation for current location in the learning path
-  - Clear indicators for locked/unlocked content
+  - Clear indicators for locked/unlocked contentBreadcrumb navigation

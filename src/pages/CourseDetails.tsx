@@ -1,241 +1,521 @@
-
-import React from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useRef, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, Users, BarChart, CheckCircle, BookOpen, FileText, Play } from "lucide-react";
+import { 
+  Clock, 
+  Users, 
+  BarChart, 
+  CheckCircle, 
+  BookOpen, 
+  FileText, 
+  Play, 
+  ChevronLeft, 
+  ChevronRight, 
+  PlayCircle, 
+  Beaker, 
+  CheckCircle2, 
+  LockIcon,
+  Home,
+  ChevronLeft as ChevronLeftIcon,
+  GraduationCap
+} from "lucide-react";
 import StatCard from "@/components/StatCard";
 import PathTracker from "@/components/PathTracker";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { marked } from 'marked';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+// Mock course data structure
+interface ContentItem {
+  id: string;
+  title: string;
+  duration: string;
+  type: "video" | "text" | "lab" | "quiz";
+  completed: boolean;
+  locked: boolean;
+  description?: string;
+  writtenContent?: string;
+}
+
+interface Section {
+  id: string;
+  title: string;
+  items: ContentItem[];
+}
+
+// Mock data for a course
+const courseSections: Section[] = [
+  {
+    id: "section-1",
+    title: "مقدمة في الشبكات",
+    items: [
+      {
+        id: "1-1",
+        title: "مقدمة عن الشبكات والبروتوكولات",
+        duration: "10min",
+        type: "video",
+        completed: true,
+        locked: false,
+        description: "تعلم المفاهيم الأساسية للشبكات وكيفية عملها",
+        writtenContent: `
+# مقدمة في الشبكات والبروتوكولات
+
+## المفاهيم الأساسية
+- تعريف الشبكة: مجموعة من الأجهزة المتصلة ببعضها البعض
+- أنواع الشبكات: LAN, WAN, MAN
+- مكونات الشبكة الأساسية
+
+## البروتوكولات الشائعة
+- TCP/IP
+- HTTP/HTTPS
+- DNS
+- DHCP
+
+## أمن الشبكات
+- أهمية حماية الشبكات
+- التهديدات الشائعة
+- طرق الحماية الأساسية
+`
+      },
+      {
+        id: "1-2",
+        title: "نموذج OSI",
+        duration: "15min",
+        type: "text",
+        completed: false,
+        locked: false,
+        description: "فهم طبقات نموذج OSI وكيفية تفاعلها"
+      },
+      {
+        id: "1-3",
+        title: "[LAB] تحليل حزم البيانات",
+        duration: "30min",
+        type: "lab",
+        completed: false,
+        locked: false,
+        description: "تطبيق عملي على تحليل حزم البيانات باستخدام Wireshark"
+      }
+    ]
+  },
+  {
+    id: "section-2",
+    title: "بروتوكولات TCP/IP",
+    items: [
+      {
+        id: "2-1",
+        title: "مقدمة في TCP/IP",
+        duration: "12min",
+        type: "video",
+        completed: false,
+        locked: true,
+        description: "فهم أساسيات بروتوكول TCP/IP وكيفية عمله"
+      },
+      {
+        id: "2-2",
+        title: "تحليل المنافذ والخدمات",
+        duration: "20min",
+        type: "text",
+        completed: false,
+        locked: true,
+        description: "تعلم كيفية تحليل المنافذ المفتوحة والخدمات المشغلة"
+      },
+      {
+        id: "2-3",
+        title: "[LAB] فحص المنافذ المفتوحة",
+        duration: "45min",
+        type: "lab",
+        completed: false,
+        locked: true,
+        description: "تطبيق عملي على فحص المنافذ المفتوحة باستخدام Nmap"
+      }
+    ]
+  }
+];
+
+const course = {
+  id: "network-security",
+  title: "Network Security Fundamentals",
+  description: "Learn the basics of securing networks, identifying vulnerabilities, and preventing intrusions. This comprehensive course provides hands-on experience with industry-standard tools and techniques.",
+  duration: "4 weeks",
+  level: "Beginner",
+  enrolledStudents: 245,
+  rating: 4.8,
+  progress: 0,
+  image: "/placeholder.svg",
+  instructor: "Dr. Sarah Chen",
+  instructorRole: "Senior Security Specialist",
+  instructorImage: "/placeholder.svg",
+  updated: "May 2023"
+};
+
+const ContentTypeIcon = ({ type }: { type: string }) => {
+  switch (type) {
+    case "video":
+      return <PlayCircle className="w-4 h-4" />;
+    case "text":
+      return <FileText className="w-4 h-4" />;
+    case "lab":
+      return <Beaker className="w-4 h-4" />;
+    case "quiz":
+      return <CheckCircle2 className="w-4 h-4" />;
+    default:
+      return null;
+  }
+};
 
 const CourseDetails = () => {
-  const { id } = useParams<{ id: string }>();
+  const { courseId } = useParams();
+  const [currentItemId, setCurrentItemId] = useState("1-1");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const [savedTime, setSavedTime] = useState(0);
+  const videoRef = useRef<HTMLIFrameElement>(null);
+  
+  // Load saved progress when video changes
+  useEffect(() => {
+    if (currentItem?.type === 'video') {
+      const savedProgress = localStorage.getItem(`video-progress-${currentItemId}`);
+      if (savedProgress) {
+        setSavedTime(parseFloat(savedProgress));
+        setShowResumePrompt(true);
+      }
+    }
+  }, [currentItemId]);
 
-  // Mock course data - in a real app, this would come from an API
-  const course = {
-    id,
-    title: "Network Security Fundamentals",
-    description: "Learn the basics of securing networks, identifying vulnerabilities, and preventing intrusions. This comprehensive course provides hands-on experience with industry-standard tools and techniques.",
-    modules: 8,
-    duration: "4 weeks",
-    level: "Beginner",
-    enrolledStudents: 245,
-    rating: 4.8,
-    progress: 0,
-    image: "/placeholder.svg",
-    instructor: "Dr. Sarah Chen",
-    instructorRole: "Senior Security Specialist",
-    instructorImage: "/placeholder.svg",
-    updated: "May 2023"
+  // Save video progress
+  const handleVideoMessage = (event: MessageEvent) => {
+    if (event.origin !== "https://www.youtube.com") return;
+    
+    try {
+      const data = JSON.parse(event.data);
+      if (data.event === "onStateChange" && data.info === 2) { // 2 is paused state
+        localStorage.setItem(`video-progress-${currentItemId}`, data.currentTime.toString());
+      }
+    } catch (e) {
+      // Ignore parsing errors from other messages
+    }
   };
 
-  const modulesData = [
-    { id: "1", title: "Introduction to Network Security", duration: "45 min", completed: false, current: true },
-    { id: "2", title: "Network Protocols and Vulnerabilities", duration: "1 hr 15 min", completed: false },
-    { id: "3", title: "Firewall Configurations", duration: "1 hr 30 min", completed: false },
-    { id: "4", title: "Intrusion Detection Systems", duration: "1 hr", completed: false },
-    { id: "5", title: "Virtual Private Networks", duration: "1 hr 15 min", completed: false },
-    { id: "6", title: "Security Policies and Compliance", duration: "50 min", completed: false },
-    { id: "7", title: "Incident Response", duration: "1 hr 20 min", completed: false },
-    { id: "8", title: "Final Assessment", duration: "2 hr", completed: false }
-  ];
+  useEffect(() => {
+    window.addEventListener('message', handleVideoMessage);
+    return () => window.removeEventListener('message', handleVideoMessage);
+  }, [currentItemId]);
+
+  // Resume video from saved position
+  const handleResume = () => {
+    if (videoRef.current && videoRef.current.contentWindow) {
+      videoRef.current.contentWindow.postMessage(
+        JSON.stringify({
+          event: 'command',
+          func: 'seekTo',
+          args: [savedTime, true]
+        }),
+        '*'
+      );
+    }
+    setShowResumePrompt(false);
+  };
+
+  // Calculate total progress
+  const totalItems = courseSections.reduce((acc, section) => acc + section.items.length, 0);
+  const completedItems = courseSections.reduce(
+    (acc, section) => acc + section.items.filter(item => item.completed).length,
+    0
+  );
+  const progress = (completedItems / totalItems) * 100;
+
+  // Find current content item
+  const currentItem = courseSections
+    .flatMap(section => section.items)
+    .find(item => item.id === currentItemId);
+
+  // Find current section
+  const currentSection = courseSections.find(section =>
+    section.items.some(item => item.id === currentItemId)
+  );
 
   return (
-    <div className="container mx-auto p-6">
-      <Helmet>
-        <title>{course.title} | Cybersecurity Academy</title>
-      </Helmet>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <img 
-                  src={course.image} 
-                  alt={course.title} 
-                  className="w-full h-48 object-cover rounded-lg md:col-span-1"
-                />
-                <div className="md:col-span-2">
-                  <h1 className="text-2xl font-bold mb-2">{course.title}</h1>
-                  <p className="text-muted-foreground mb-4">{course.description}</p>
-                  
-                  <div className="flex flex-wrap gap-4 mb-4">
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-                      <span className="text-sm">{course.duration}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-1 text-muted-foreground" />
-                      <span className="text-sm">{course.enrolledStudents} students</span>
-                    </div>
-                    <div className="flex items-center">
-                      <BarChart className="h-4 w-4 mr-1 text-muted-foreground" />
-                      <span className="text-sm">{course.level}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center mt-4">
-                    <img 
-                      src={course.instructorImage} 
-                      alt={course.instructor} 
-                      className="w-10 h-10 rounded-full mr-3"
-                    />
-                    <div>
-                      <p className="font-medium">{course.instructor}</p>
-                      <p className="text-sm text-muted-foreground">{course.instructorRole}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4 mt-6">
-                <Button className="flex-1">Enroll Now</Button>
-                <Button variant="outline" className="flex-1">Add to Wishlist</Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Tabs defaultValue="content">
-            <TabsList className="grid grid-cols-3 mb-6">
-              <TabsTrigger value="content">Course Content</TabsTrigger>
-              <TabsTrigger value="resources">Resources</TabsTrigger>
-              <TabsTrigger value="reviews">Reviews</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="content" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Course Modules</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {modulesData.map((module, index) => (
-                      <div key={module.id} className="border-b last:border-0 pb-4 last:pb-0">
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-start">
-                            <div className="mr-3 mt-1">
-                              {module.completed ? 
-                                <CheckCircle className="h-5 w-5 text-green-500" /> : 
-                                <Play className="h-5 w-5 text-muted-foreground" />
-                              }
-                            </div>
-                            <div>
-                              <p className="font-medium">{index + 1}. {module.title}</p>
-                              <p className="text-sm text-muted-foreground">{module.duration}</p>
-                            </div>
-                          </div>
-                          {module.current && (
-                            <Button size="sm" variant="outline">
-                              Resume
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="resources">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center p-3 border rounded-lg">
-                      <FileText className="h-5 w-5 mr-3 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">Network Security Cheatsheet</p>
-                        <p className="text-sm text-muted-foreground">PDF, 2.4 MB</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center p-3 border rounded-lg">
-                      <FileText className="h-5 w-5 mr-3 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">Lab Environment Setup Guide</p>
-                        <p className="text-sm text-muted-foreground">PDF, 1.8 MB</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center p-3 border rounded-lg">
-                      <FileText className="h-5 w-5 mr-3 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">Security Tools Reference</p>
-                        <p className="text-sm text-muted-foreground">PDF, 3.2 MB</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="reviews">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="space-y-6">
-                    <div>
-                      <div className="flex items-center mb-2">
-                        <div className="bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center mr-3">
-                          <span className="font-medium">JD</span>
-                        </div>
-                        <div>
-                          <p className="font-medium">John Doe</p>
-                          <p className="text-sm text-muted-foreground">2 months ago</p>
-                        </div>
-                      </div>
-                      <p>This course provided an excellent foundation in network security concepts. The labs were practical and informative.</p>
-                    </div>
-                    
-                    <div>
-                      <div className="flex items-center mb-2">
-                        <div className="bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center mr-3">
-                          <span className="font-medium">AS</span>
-                        </div>
-                        <div>
-                          <p className="font-medium">Alice Smith</p>
-                          <p className="text-sm text-muted-foreground">1 month ago</p>
-                        </div>
-                      </div>
-                      <p>The instructor explains complex topics in a clear, easy-to-understand manner. I particularly enjoyed the section on intrusion detection systems.</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+    <div className="min-h-screen flex bg-background" dir="rtl">
+      {/* Course Content Sidebar */}
+      <div 
+        className={cn(
+          "h-screen bg-muted/30 border-l flex flex-col transition-all duration-300",
+          sidebarCollapsed ? "w-0 overflow-hidden" : "w-80"
+        )}
+      >
+        <div className="p-4 border-b bg-background">
+          <h2 className="text-lg font-semibold mb-2">محتوى الدورة</h2>
+          <Progress value={progress} className="h-2 bg-muted [&>div]:bg-[#00C896]" />
+          <p className="text-sm text-muted-foreground mt-2">
+            {completedItems} من {totalItems} مكتمل ({Math.round(progress)}%)
+          </p>
         </div>
         
-        <div className="space-y-6">
-          <StatCard
-            title="Your Progress"
-            value="0%"
-            description="Just started"
-            icon={<BookOpen className="h-5 w-5 text-cyber-primary" />}
-          />
-          
-          <PathTracker
-            title="Learning Path"
-            steps={[
-              { id: "foundations", title: "Security Foundations", completed: true },
-              { id: "network", title: "Network Security", completed: false, current: true },
-              { id: "pentesting", title: "Penetration Testing", completed: false },
-              { id: "incident", title: "Incident Response", completed: false },
-              { id: "certification", title: "Security+ Certification", completed: false }
-            ]}
-          />
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Certificate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">Complete this course to earn a certificate of completion</p>
-              <div className="bg-gray-100 rounded-lg p-4 flex items-center justify-center">
-                <Award className="h-16 w-16 text-gray-400" />
+        <ScrollArea className="flex-1">
+          <div className="p-4">
+            {courseSections.map((section) => (
+              <div key={section.id} className="mb-6">
+                <h3 className="font-medium mb-2">{section.title}</h3>
+                <div className="space-y-1">
+                  {section.items.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => !item.locked && setCurrentItemId(item.id)}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-2 rounded text-sm text-start",
+                        currentItemId === item.id && "bg-[#00C896]/10 text-[#00C896]",
+                        item.locked ? "opacity-50 cursor-not-allowed" : "hover:bg-[#00C896]/10 hover:text-[#00C896]"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 flex-1">
+                        <ContentTypeIcon type={item.type} />
+                        <span>{item.title}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {item.locked && <LockIcon className="w-4 h-4" />}
+                        {item.completed && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                        <span className="text-xs text-muted-foreground">{item.duration}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-screen">
+        {/* Breadcrumb Navigation */}
+        <div className="h-12 border-b bg-background/95 backdrop-blur flex items-center px-4">
+          <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+            <Link 
+              to="/dashboard" 
+              className="flex items-center gap-1 hover:text-foreground transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              <span>الرئيسية</span>
+            </Link>
+            <ChevronLeftIcon className="w-4 h-4 mx-1" />
+            <Link 
+              to="/courses/level-1/"
+              className="flex items-center gap-1 hover:text-foreground transition-colors"
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span>المستوى الأول</span>
+            </Link>
+            <ChevronLeftIcon className="w-4 h-4 mx-1" />
+            <span className="text-foreground font-medium">{currentItem?.title}</span>
+          </nav>
         </div>
+
+        <header className="h-14 border-b flex items-center justify-between px-4 bg-background">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hover:bg-[#00C896]/10 hover:text-[#00C896]"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          >
+            {sidebarCollapsed ? <ChevronLeft /> : <ChevronRight />}
+          </Button>
+          <div className="flex items-center gap-4">
+            <Badge variant="outline" className="text-xs">
+              {currentItem?.type === 'video' ? 'فيديو تعليمي' : 
+               currentItem?.type === 'lab' ? 'تطبيق عملي' : 
+               currentItem?.type === 'text' ? 'محتوى نصي' : 'اختبار'}
+            </Badge>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="hover:bg-[#00C896]/10 hover:text-[#00C896]"
+            >
+              السابق
+            </Button>
+            <Button 
+              size="sm" 
+              className="bg-[#00C896] hover:bg-[#00C896]/90 text-white"
+            >
+              التالي
+            </Button>
+          </div>
+        </header>
+        
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-5xl mx-auto p-6">
+            <Helmet>
+              <title>{currentItem?.title || course.title} | أكاديمية الأمن السيبراني</title>
+            </Helmet>
+
+            {/* Content Display Area */}
+            {currentItem?.type === 'video' ? (
+              <>
+                <div className="relative">
+                  <div className="aspect-video rounded-lg mb-6 overflow-hidden">
+                    <iframe
+                      ref={videoRef}
+                      className="w-full h-full"
+                      src={`https://www.youtube.com/embed/dQw4w9WgXcQ?enablejsapi=1&origin=${window.location.origin}`}
+                      title={currentItem.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                  {showResumePrompt && (
+                    <div className="absolute top-4 right-4 bg-background/95 p-4 rounded-lg shadow-lg border flex items-center gap-4">
+                      <p className="text-sm">هل تريد متابعة المشاهدة من حيث توقفت؟ ({Math.floor(savedTime / 60)}:{Math.floor(savedTime % 60).toString().padStart(2, '0')})</p>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-[#00C896] hover:bg-[#00C896]/90 text-white"
+                          onClick={handleResume}
+                        >
+                          متابعة
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="hover:bg-[#00C896]/10 hover:text-[#00C896]"
+                          onClick={() => setShowResumePrompt(false)}
+                        >
+                          البدء من جديد
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-end mb-4">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        className="bg-background hover:bg-[#00C896] hover:text-white transition-colors"
+                      >
+                        <FileText className="w-4 h-4 ml-2" />
+                        عرض جميع الملاحظات
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-3xl">
+                      <DialogHeader>
+                        <DialogTitle>جميع الملاحظات - {currentItem.title}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        {/* Here we would map through all saved notes */}
+                        <Card className="p-4">
+                          <p className="text-sm text-muted-foreground mb-2">٢٠ فبراير ٢٠٢٤</p>
+                          <p>هنا ستظهر الملاحظات المحفوظة...</p>
+                        </Card>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                
+                <Tabs defaultValue="written" className="mb-6">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger 
+                      value="written" 
+                      className="data-[state=active]:bg-[#00C896] data-[state=active]:text-white"
+                    >
+                      النسخة المكتوبة
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="notes"
+                      className="data-[state=active]:bg-[#00C896] data-[state=active]:text-white"
+                    >
+                      الملاحظات
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="written">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="prose prose-sm max-w-none dark:prose-invert rtl
+                          prose-headings:mb-4 prose-headings:mt-6 
+                          prose-h1:text-2xl prose-h1:font-bold
+                          prose-h2:text-xl prose-h2:font-semibold
+                          prose-p:my-4 
+                          prose-ul:my-4 prose-ul:list-disc prose-ul:pr-6
+                          prose-li:my-2
+                          prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded
+                          [&>*:first-child]:mt-0"
+                        >
+                          {currentItem.writtenContent ? (
+                            <div 
+                              className="whitespace-pre-wrap"
+                              dangerouslySetInnerHTML={{ 
+                                __html: marked(currentItem.writtenContent, {
+                                  gfm: true,
+                                  breaks: true,
+                                  mangle: false,
+                                  headerIds: false
+                                })
+                              }} 
+                            />
+                          ) : (
+                            <p className="text-muted-foreground text-center py-8">
+                              النسخة المكتوبة غير متوفرة لهذا المحتوى
+                            </p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="notes">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <FileText className="w-5 h-5" />
+                          ملاحظاتك
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="min-h-[200px] border rounded-lg p-4">
+                          <textarea 
+                            className="w-full h-full min-h-[180px] bg-transparent resize-none focus:outline-none"
+                            placeholder="اكتب ملاحظاتك هنا..."
+                          />
+                        </div>
+                        <div className="flex justify-end mt-4">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="hover:bg-[#00C896]/10 hover:text-[#00C896]"
+                          >
+                            حفظ الملاحظات
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
+              </>
+            ) : currentItem?.type === 'lab' ? (
+              <Card className="p-6 mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Beaker className="w-5 h-5" />
+                  <h2 className="text-lg font-semibold">تطبيق عملي</h2>
+                </div>
+                <div className="prose max-w-none">
+                  {/* Lab content would go here */}
+                </div>
+              </Card>
+            ) : (
+              <Card className="p-6 mb-6">
+                <div className="prose max-w-none">
+                  {/* Text content would go here */}
+                </div>
+              </Card>
+            )}
+          </div>
+        </main>
       </div>
     </div>
   );

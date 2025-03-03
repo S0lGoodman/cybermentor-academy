@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Lock, Clock, Award, ArrowLeft } from "lucide-react";
@@ -16,6 +15,8 @@ interface CourseCardProps {
   duration: string;
   locked?: boolean;
   certified?: boolean;
+  phaseId?: string;
+  slug?: string;
 }
 
 const levelLabels = {
@@ -34,20 +35,18 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   duration,
   locked = false,
   certified = false,
+  phaseId,
+  slug,
 }) => {
-  const levelColors = {
-    Beginner: "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300",
-    Intermediate: "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300",
-    Advanced: "bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300",
-  };
+  const courseUrl = slug ? `/courses/${phaseId}/${slug}` : `/courses/${phaseId}/${id}`;
 
   return (
-    <Link to={locked ? "#" : `/courses/${id}`}>
+    <Link to={locked ? "#" : courseUrl}>
       <Card className={cn(
         "overflow-hidden hover:scale-[1.02] transition-all duration-300 h-full flex flex-col bg-card border-border",
         locked ? "opacity-75 cursor-not-allowed" : "cursor-pointer hover:shadow-lg"
       )}>
-        <div className="relative h-36 overflow-hidden">
+        <div className="relative aspect-video overflow-hidden">
           <img
             src={image}
             alt={title}
@@ -59,18 +58,6 @@ export const CourseCard: React.FC<CourseCardProps> = ({
               <Lock className="w-10 h-10 text-foreground" />
             </div>
           )}
-          
-          <div className="absolute top-2 right-2 flex gap-2">
-            <Badge variant="secondary" className={cn("font-medium", levelColors[level])}>
-              {levelLabels[level]}
-            </Badge>
-            
-            {certified && (
-              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300 font-medium">
-                <Award className="w-3 h-3 ml-1" /> معتمدة
-              </Badge>
-            )}
-          </div>
         </div>
         
         <CardContent className="flex-1 p-4">
@@ -93,7 +80,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           )}
         </CardContent>
         
-        <CardFooter className="px-4 py-3 bg-muted dark:bg-muted/20 flex justify-between items-center border-t border-border">
+        <CardFooter className="flex items-center gap-2 text-muted-foreground bg-muted/5 border-t">
           <ArrowLeft className="w-4 h-4 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             {locked ? "استكمل المتطلبات الأساسية لفتح الدورة" : "انقر هنا لعرض الدورة"}
