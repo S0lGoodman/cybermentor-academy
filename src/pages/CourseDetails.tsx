@@ -452,9 +452,7 @@ const CourseDetails = () => {
                               dangerouslySetInnerHTML={{ 
                                 __html: marked(currentItem.writtenContent, {
                                   gfm: true,
-                                  breaks: true,
-                                  mangle: false,
-                                  headerIds: false
+                                  breaks: true
                                 })
                               }} 
                             />
