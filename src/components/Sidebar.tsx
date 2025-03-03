@@ -70,11 +70,11 @@ export const AdminNavbar: React.FC = () => {
   const { expanded, setExpanded, setIsAdmin } = useSidebar();
 
   const studentNav = [
-    { icon: Home, label: "Dashboard", href: "/dashboard" },
-    { icon: BookOpen, label: "Courses", href: "/courses" },
-    { icon: Award, label: "Certifications", href: "/certifications" },
-    { icon: FileText, label: "Assessments", href: "/assessments" },
-    { icon: User, label: "Profile", href: "/profile" },
+    { icon: Home, label: "لوحة التحكم", href: "/dashboard" },
+    { icon: BookOpen, label: "الدورات", href: "/courses" },
+    { icon: Layers, label: "المختبرات", href: "/labs" },
+    { icon: FileText, label: "التقييمات", href: "/assessments" },
+    { icon: User, label: "الملف الشخصي", href: "/profile" },
   ];
 
   const adminNav = [
@@ -103,7 +103,7 @@ export const AdminNavbar: React.FC = () => {
       <div className="p-4 flex justify-between items-center">
         <div className={cn("flex items-center gap-2", expanded ? "" : "justify-center w-full")}>
           <Shield className="text-cyber-primary h-8 w-8" />
-          {expanded && <span className="text-xl font-semibold">CyberEdu</span>}
+          {expanded && <span className="text-xl font-semibold">سايبر مينتور اكاديمي</span>}
         </div>
         <Button 
           variant="ghost" 
@@ -127,7 +127,7 @@ export const AdminNavbar: React.FC = () => {
 
       <div className="px-3 py-2">
         <p className={cn("text-xs text-gray-500 font-medium mb-2 px-3", !expanded && "sr-only")}>
-          MAIN MENU
+        القائمة الرئيسية
         </p>
         <nav className="space-y-1">
           {navItems.map((item) => (

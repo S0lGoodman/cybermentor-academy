@@ -21,47 +21,47 @@ import {
 import { useSidebar } from "@/components/Sidebar";
 
 const progressData = [
-  { name: "Web Security", completed: 15, total: 20 },
-  { name: "Network Defense", completed: 8, total: 15 },
-  { name: "Ethical Hacking", completed: 12, total: 25 },
-  { name: "Forensics", completed: 5, total: 18 },
-  { name: "Cryptography", completed: 10, total: 12 },
+  { name: "أمن الويب", completed: 15, total: 20 },
+  { name: "الدفاع عن الشبكات", completed: 8, total: 15 },
+  { name: "القرصنة الأخلاقية", completed: 12, total: 25 },
+  { name: "التحليل الجنائي", completed: 5, total: 18 },
+  { name: "التشفير", completed: 10, total: 12 },
 ];
 
 const pathSteps = [
-  { id: "1", title: "Complete Introduction to Cybersecurity", completed: true },
-  { id: "2", title: "Pass Network Security Fundamentals", completed: true },
-  { id: "3", title: "Complete Web Application Security module", completed: false, current: true },
-  { id: "4", title: "Pass Ethical Hacking Practical Assessment", completed: false },
-  { id: "5", title: "Complete Security Operations certification", completed: false },
+  { id: "1", title: "إكمال مقدمة في الأمن السيبراني", completed: true },
+  { id: "2", title: "اجتياز أساسيات أمن الشبكات", completed: true },
+  { id: "3", title: "إكمال وحدة أمن تطبيقات الويب", completed: false, current: true },
+  { id: "4", title: "اجتياز التقييم العملي للقرصنة الأخلاقية", completed: false },
+  { id: "5", title: "إكمال شهادة عمليات الأمن", completed: false },
 ];
 
 const recommendedCourses = [
   {
     id: "course-1",
-    title: "Advanced Web Application Security",
-    description: "Learn about XSS, CSRF, SQL Injection, and other advanced web application vulnerabilities.",
+    title: "أمن تطبيقات الويب المتقدم",
+    description: "تعلم عن XSS و CSRF وحقن SQL وثغرات تطبيقات الويب المتقدمة الأخرى.",
     image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=600&h=400",
     progress: 25,
-    level: "Intermediate" as const,
-    duration: "8 hours",
+    level: "متوسط" as const,
+    duration: "8 ساعات",
   },
   {
     id: "course-2",
-    title: "Network Defense Strategies",
-    description: "Master the tools and techniques needed to protect networks from sophisticated attacks.",
+    title: "استراتيجيات الدفاع عن الشبكات",
+    description: "إتقان الأدوات والتقنيات اللازمة لحماية الشبكات من الهجمات المتطورة.",
     image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&h=400",
     progress: 0,
-    level: "Advanced" as const,
-    duration: "12 hours",
+    level: "متقدم" as const,
+    duration: "12 ساعة",
   },
   {
     id: "course-3",
-    title: "Security Operations Center",
-    description: "Learn the essential skills for working in a Security Operations Center (SOC).",
+    title: "مركز عمليات الأمن",
+    description: "تعلم المهارات الأساسية للعمل في مركز عمليات الأمن (SOC).",
     image: "https://images.unsplash.com/photo-1496096265110-f83ad7f96608?auto=format&fit=crop&w=600&h=400",
-    level: "Intermediate" as const,
-    duration: "10 hours",
+    level: "متوسط" as const,
+    duration: "10 ساعات",
     locked: true,
   },
 ];
@@ -97,41 +97,65 @@ const Dashboard = () => {
   }, [setExpanded, setIsAdmin]);
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex" dir="rtl">
       <AdminNavbar />
       
       <div className="flex-1">
-        <Navbar title="Dashboard" />
+        <Navbar title="لوحة التحكم" />
         
         <main className="p-6">
           <div className="max-w-7xl mx-auto">
             {/* Welcome & Stats */}
             <div className="mb-8 animate-on-scroll">
-              <h1 className="text-2xl font-bold mb-2">Welcome back, John!</h1>
-              <p className="text-muted-foreground">Track your progress and continue your learning journey.</p>
+              <h1 className="text-2xl font-bold mb-2">مرحباً بعودتك، جون!</h1>
+              <p className="text-muted-foreground">تتبع تقدمك وواصل رحلة تعلمك.</p>
             </div>
             
+            {/* Continue Learning Section */}
+            <div className="mb-8 animate-on-scroll">
+              <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4">متابعة التعلم</h2>
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <img 
+                      src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=200&h=200" 
+                      alt="Course thumbnail" 
+                      className="w-24 h-24 object-cover rounded-lg"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium mb-1">أمن تطبيقات الويب المتقدم</h3>
+                    <p className="text-sm text-muted-foreground mb-2">آخر نشاط: الوحدة 3 - حقن SQL</p>
+                    <div className="h-2 bg-slate-100 rounded-full mb-2">
+                      <div className="h-2 bg-cyber-primary rounded-full" style={{ width: '25%' }} />
+                    </div>
+                    <Button className="mt-2">متابعة التعلم</Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-on-scroll">
               <StatCard
-                title="Courses Enrolled"
+                title="الدورات المسجلة"
                 value="7"
                 icon={<BookOpen className="h-5 w-5 text-cyber-primary" />}
                 trend={{ value: 2, isPositive: true }}
               />
               <StatCard
-                title="Certifications"
-                value="2"
-                icon={<Award className="h-5 w-5 text-cyber-primary" />}
+                title="الدورات المكتملة"
+                value="3"
+                icon={<BookCheck className="h-5 w-5 text-cyber-primary" />}
                 trend={{ value: 1, isPositive: true }}
               />
               <StatCard
-                title="Learning Hours"
+                title="ساعات التعلم"
                 value="48"
                 icon={<Clock className="h-5 w-5 text-cyber-primary" />}
                 trend={{ value: 12, isPositive: true }}
               />
               <StatCard
-                title="Assessments Completed"
+                title="التقييمات المكتملة"
                 value="15"
                 icon={<FileText className="h-5 w-5 text-cyber-primary" />}
                 trend={{ value: 5, isPositive: true }}
@@ -141,18 +165,18 @@ const Dashboard = () => {
             {/* Current Learning Path */}
             <div className="mb-8 animate-on-scroll">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold">Current Learning Path</h2>
+                <h2 className="text-xl font-semibold">مسار التعلم الحالي</h2>
                 <Button variant="outline" size="sm" className="text-cyber-primary border-cyber-primary/30">
-                  All Learning Paths <ChevronRight className="ml-1 h-4 w-4" />
+                  جميع المسارات <ChevronRight className="mr-1 h-4 w-4" />
                 </Button>
               </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                  <ProgressChart data={progressData} title="Network Security Specialist Path" />
+                  <ProgressChart data={progressData} title="نشاطي" />
                 </div>
                 <PathTracker
-                  title="Your Next Steps"
+                  title="خطواتي القادمة"
                   steps={pathSteps}
                 />
               </div>
@@ -161,10 +185,10 @@ const Dashboard = () => {
             {/* Recommended Courses */}
             <div className="mb-8 animate-on-scroll">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold">Recommended for You</h2>
+                <h2 className="text-xl font-semibold">دوراتي</h2>
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/courses">
-                    View All Courses <ChevronRight className="ml-1 h-4 w-4" />
+                    عرض جميع الدورات <ChevronRight className="mr-1 h-4 w-4" />
                   </Link>
                 </Button>
               </div>
@@ -180,7 +204,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-on-scroll">
               <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Recent Activity</h2>
+                  <h2 className="text-lg font-semibold">النشاط الأخير</h2>
                 </div>
                 <div className="space-y-4">
                   {[
@@ -204,7 +228,7 @@ const Dashboard = () => {
               
               <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Upcoming Deadlines</h2>
+                  <h2 className="text-lg font-semibold">المواعيد النهائية القادمة</h2>
                 </div>
                 <div className="space-y-4">
                   {[

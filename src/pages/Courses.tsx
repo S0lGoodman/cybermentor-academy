@@ -56,18 +56,18 @@ const Courses = () => {
       </Helmet>
       
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Cybersecurity Courses</h1>
+        <h1 className="text-3xl font-bold">دورات الأمن السيبراني</h1>
         <div className="flex items-center space-x-2">
           <select className="border rounded-md px-3 py-2 bg-white text-sm">
-            <option>All Levels</option>
-            <option>Beginner</option>
-            <option>Intermediate</option>
-            <option>Advanced</option>
+            <option>جميع المستويات</option>
+            <option>مبتدئ</option>
+            <option>متوسط</option>
+            <option>متقدم</option>
           </select>
           <select className="border rounded-md px-3 py-2 bg-white text-sm">
-            <option>Most Popular</option>
-            <option>Newest</option>
-            <option>A-Z</option>
+            <option>الأكثر شعبية</option>
+            <option>الأحدث</option>
+            <option>أ-ي</option>
           </select>
         </div>
       </div>
@@ -81,7 +81,7 @@ const Courses = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
+            <CardTitle className="text-sm font-medium">إجمالي الدورات</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
@@ -93,7 +93,7 @@ const Courses = () => {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Course Hours</CardTitle>
+            <CardTitle className="text-sm font-medium">ساعات الدورة</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
@@ -105,7 +105,7 @@ const Courses = () => {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Enrolled Students</CardTitle>
+            <CardTitle className="text-sm font-medium">الطلاب المسجلين</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
@@ -117,7 +117,7 @@ const Courses = () => {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Certifications</CardTitle>
+            <CardTitle className="text-sm font-medium">الشهادات</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">

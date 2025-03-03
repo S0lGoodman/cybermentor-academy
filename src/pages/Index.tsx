@@ -147,7 +147,7 @@ const Index = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-6 md:mb-0">
               <Shield className="h-8 w-8 text-cyber-primary mr-2" />
-              <span className="text-2xl font-bold">CyberEdu</span>
+              <span className="text-2xl font-bold">سايبر مينتور اكاديمي</span>
             </div>
             <div className="flex space-x-6">
               <Link to="#" className="text-white/70 hover:text-white transition-colors">About</Link>
@@ -157,7 +157,7 @@ const Index = () => {
             </div>
           </div>
           <div className="border-t border-white/10 mt-8 pt-8 text-center md:text-left">
-            <p className="text-white/60 text-sm">© 2024 CyberEdu. All rights reserved.</p>
+            <p className="text-white/60 text-sm">© 2024 سايبر مينتور اكاديمي. All rights reserved.</p>
           </div>
         </div>
       </footer>

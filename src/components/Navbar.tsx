@@ -12,8 +12,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bell, Settings, LogOut, User, Search, Shield } from "lucide-react";
+import { Bell, Settings, LogOut, User, Search, Shield, Moon, Sun } from "lucide-react";
 import { useSidebar } from "./Sidebar";
+import { useTheme } from "./ThemeProvider";
 
 interface NavbarProps {
   title?: string;
@@ -21,6 +22,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ title }) => {
   const { isAdmin } = useSidebar();
+  const { theme, setTheme } = useTheme();
 
   return (
     <header className="sticky top-0 z-30 w-full border-b bg-white/80 backdrop-blur-sm">
@@ -30,7 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({ title }) => {
           {!title && (
             <Link to="/" className="flex items-center gap-2">
               <Shield className="h-8 w-8 text-cyber-primary" />
-              <span className="text-xl font-semibold">CyberEdu</span>
+              <span className="text-xl font-semibold">سايبر مينتور اكاديمي</span>
             </Link>
           )}
         </div>
@@ -40,13 +42,25 @@ export const Navbar: React.FC<NavbarProps> = ({ title }) => {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/70" />
             <Input
               type="search"
-              placeholder="Search courses, modules, certifications..."
+              placeholder="ابحث عن الدورات والوحدات "
               className="w-full rounded-full bg-background pl-8 focus-visible:ring-cyber-primary/30"
             />
           </div>
         </div>
 
         <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full"
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+          >
+            {theme === "light" ? (
+              <Moon className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <Sun className="h-5 w-5 text-muted-foreground" />
+            )}
+          </Button>
           <Button variant="outline" size="icon" className="rounded-full">
             <Bell className="h-5 w-5 text-muted-foreground" />
           </Button>
@@ -71,19 +85,19 @@ export const Navbar: React.FC<NavbarProps> = ({ title }) => {
               <DropdownMenuItem asChild>
                 <Link to={isAdmin ? "/admin/profile" : "/profile"} className="cursor-pointer flex items-center">
                   <User className="mr-2 h-4 w-4" />
-                  Profile
+                  الملف الشخصي
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to={isAdmin ? "/admin/settings" : "/settings"} className="cursor-pointer flex items-center">
                   <Settings className="mr-2 h-4 w-4" />
-                  Settings
+                  الإعدادات
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
                 <LogOut className="mr-2 h-4 w-4" />
-                Log out
+                تسجيل الخروج
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

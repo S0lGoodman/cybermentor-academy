@@ -90,7 +90,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         
         <CardFooter className="px-4 py-3 bg-muted/30 flex justify-between items-center border-t">
           <span className="text-xs font-medium text-muted-foreground">
-            {locked ? "Complete prerequisites to unlock" : "Click to view course"}
+            {locked ? "استكمل المتطلبات الأساسية لفتح الدورة" : "انقر هنا لعرض الدورة"}
           </span>
           <ArrowRight className="w-4 h-4 text-muted-foreground" />
         </CardFooter>
