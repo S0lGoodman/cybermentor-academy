@@ -44,7 +44,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                 >
                   {trend.isPositive ? "+" : "-"}{Math.abs(trend.value)}%
                 </span>
-                <span className="text-xs text-muted-foreground ml-1">vs last month</span>
+                <span className="text-xs text-muted-foreground ml-1">مقارنة بالشهر الماضي</span>
               </div>
             )}
           </div>

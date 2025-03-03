@@ -101,7 +101,11 @@ export const AdminNavbar: React.FC = () => {
     >
       <div className="p-4 flex justify-between items-center">
         <div className={cn("flex items-center gap-2", expanded ? "" : "justify-center w-full")}>
-          <Shield className="text-teal-500 h-8 w-8" />
+          <img 
+            src="/logo.png" 
+            alt="Cyber Mentor Academy"
+            className="h-10 w-10 object-contain" 
+          />
           {expanded && <span className="text-xl font-semibold text-foreground">سايبر مينتور اكاديمي</span>}
         </div>
         <Button 
