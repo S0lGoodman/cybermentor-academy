@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
   Home, BookOpen, Award, User, Settings, ChevronLeft, Menu, 
-  Shield, Users, FileText, BarChart, Layers, Bell
+  Shield, Users, FileText, BarChart, Layers, Bell, GraduationCap, LogOut, X, FlaskConical
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -51,7 +51,7 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href, active, onCl
     <Link
       to={href}
       className={cn(
-        "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-300 group",
+        "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-300 group relative",
         active 
           ? "bg-gradient-to-r from-teal-500/20 to-lime-500/20 text-teal-500 font-medium dark:from-teal-500/10 dark:to-lime-500/10" 
           : "text-muted-foreground hover:bg-gradient-to-r hover:from-teal-500/10 hover:to-lime-500/10 hover:text-teal-500"
@@ -59,7 +59,12 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href, active, onCl
       onClick={onClick}
     >
       <Icon size={20} className={cn("min-w-[20px]", active ? "text-teal-500" : "")} />
-      {expanded && <span className="text-sm">{label}</span>}
+      <span className={cn(
+        "text-sm whitespace-nowrap",
+        expanded ? "opacity-100 visible" : "opacity-0 invisible w-0"
+      )}>
+        {label}
+      </span>
     </Link>
   );
 };
@@ -67,16 +72,33 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href, active, onCl
 export const AdminNavbar: React.FC = () => {
   const location = useLocation();
   const { expanded, setExpanded, setIsAdmin } = useSidebar();
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
-  const studentNav = [
-    { icon: Home, label: "لوحة التحكم", href: "/dashboard" },
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (expanded && 
+          sidebarRef.current && 
+          !sidebarRef.current.contains(event.target as Node) &&
+          !(event.target as Element).closest('button[data-expand-trigger="true"]')) {
+        setExpanded(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [expanded, setExpanded]);
+
+  const studentNavItems = [
+    { icon: Home, label: "الرئيسية", href: "/dashboard" },
     { icon: BookOpen, label: "الدورات", href: "/courses" },
-    { icon: Layers, label: "المختبرات", href: "/labs" },
-    { icon: FileText, label: "التقييمات", href: "/assessments" },
-    { icon: User, label: "الملف الشخصي", href: "/profile" },
+    { icon: FlaskConical, label: "المختبرات", href: "/labs" },
+    { icon: Award, label: "الإنجازات", href: "/achievements" },
+    { icon: Settings, label: "الإعدادات", href: "/settings" },
   ];
 
-  const adminNav = [
+  const adminNavItems = [
     { icon: Home, label: "Dashboard", href: "/admin" },
     { icon: Users, label: "Students", href: "/admin/students" },
     { icon: BookOpen, label: "Courses", href: "/admin/courses" },
@@ -85,7 +107,7 @@ export const AdminNavbar: React.FC = () => {
     { icon: Settings, label: "Settings", href: "/admin/settings" },
   ];
 
-  const navItems = location.pathname.includes("/admin") ? adminNav : studentNav;
+  const navItems = location.pathname.includes("/admin") ? adminNavItems : studentNavItems;
 
   const toggleAdmin = () => {
     setIsAdmin(prev => !prev);
@@ -94,42 +116,53 @@ export const AdminNavbar: React.FC = () => {
 
   return (
     <aside 
+      ref={sidebarRef}
       className={cn(
-        "h-screen sticky top-0 flex flex-col bg-background border-r border-border transition-all duration-300",
-        expanded ? "w-64" : "w-20"
+        "fixed top-0 right-0 z-40 h-screen border-l border-border transition-all duration-300 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        "dark:bg-muted/10 dark:supports-[backdrop-filter]:bg-background/10",
+        expanded ? "w-64" : "w-16"
       )}
     >
       <div className="p-4 flex justify-between items-center">
-        <div className={cn("flex items-center gap-2", expanded ? "" : "justify-center w-full")}>
-          <img 
-            src="/logo.png" 
-            alt="Cyber Mentor Academy"
-            className="h-10 w-10 object-contain" 
-          />
-          {expanded && <span className="text-xl font-semibold text-foreground">سايبر مينتور اكاديمي</span>}
-        </div>
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={() => setExpanded(prev => !prev)}
           className={cn("text-teal-500 hover:bg-teal-500/10", !expanded && "hidden")}
         >
-          <ChevronLeft className={cn("h-5 w-5 transition-transform", !expanded && "rotate-180")} />
+          <ChevronLeft className={cn("h-5 w-5 transition-transform rotate-180", !expanded && "rotate-0")} />
         </Button>
-        {!expanded && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setExpanded(prev => !prev)}
-            className="absolute -right-4 top-6 h-8 w-8 rounded-full bg-background border border-border hover:bg-teal-500/10"
-          >
-            <Menu className="h-4 w-4 text-teal-500" />
-          </Button>
-        )}
+        <div className={cn("flex items-center gap-2", expanded ? "" : "justify-center w-full")}>
+          <img 
+            src="/logo.png" 
+            alt="Cyber Mentor Academy"
+            className={cn("object-contain", expanded ? "h-12 w-12" : "h-10 w-10")}
+          />
+          {expanded && (
+            <span className="text-xl font-semibold text-foreground">
+              سايبر مينتور اكاديمي
+            </span>
+          )}
+        </div>
       </div>
 
+      {!expanded && (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          data-expand-trigger="true"
+          onClick={() => setExpanded(true)}
+          className="absolute -left-10 top-6 h-8 w-8 rounded-full bg-background border border-border hover:bg-teal-500/10"
+        >
+          <Menu className="h-4 w-4 text-teal-500" />
+        </Button>
+      )}
+
       <div className="px-3 py-2">
-        <p className={cn("text-xs text-muted-foreground font-medium mb-2 px-3", !expanded && "sr-only")}>
+        <p className={cn(
+          "text-xs text-muted-foreground font-medium mb-2 px-3 transition-all duration-300",
+          !expanded && "opacity-0 absolute"
+        )}>
           القائمة الرئيسية
         </p>
         <nav className="space-y-1">

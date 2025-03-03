@@ -27,12 +27,6 @@ export const Navbar: React.FC<NavbarProps> = ({ title }) => {
       <div className="flex h-16 items-center justify-between px-6">
         <div className="flex items-center gap-2">
           {title && <h1 className="text-xl font-semibold">{title}</h1>}
-          {!title && (
-            <Link to="/" className="flex items-center gap-2">
-              <Shield className="h-8 w-8 text-cyber-primary" />
-              <span className="text-xl font-semibold">سايبر مينتور اكاديمي</span>
-            </Link>
-          )}
         </div>
 
         <div className="hidden md:block flex-1 px-8 max-w-md mx-auto">
@@ -48,13 +42,13 @@ export const Navbar: React.FC<NavbarProps> = ({ title }) => {
 
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <Button variant="outline" size="icon" className="rounded-full">
+          <Button variant="outline" size="icon" className="rounded-full hover:bg-teal-500/10 hover:text-teal-500 hover:border-teal-500/30">
             <Bell className="h-5 w-5 text-muted-foreground" />
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full" aria-label="User menu">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-transparent" aria-label="User menu">
                 <Avatar className="h-9 w-9 border-2 border-cyber-primary/20">
                   <AvatarImage src="https://github.com/shadcn.png" alt="User" />
                   <AvatarFallback>JD</AvatarFallback>

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 interface StatCardProps {
   title: string;
-  value: string | number;
+  value: string;
   description?: string;
   icon?: React.ReactNode;
   trend?: {
@@ -23,36 +23,29 @@ export const StatCard: React.FC<StatCardProps> = ({
   className,
 }) => {
   return (
-    <Card className={cn("overflow-hidden bg-card border-border hover:shadow-md transition-all duration-300", className)}>
+    <Card className={cn(
+      "overflow-hidden bg-card border-border group hover:shadow-lg hover:scale-[1.02] hover:bg-gradient-to-br hover:from-background hover:to-muted transition-all duration-300",
+      className
+    )}>
       <CardContent className="p-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
-            <h3 className="text-2xl font-bold mb-1 text-foreground">{value}</h3>
-            {description && (
-              <p className="text-sm text-muted-foreground">{description}</p>
-            )}
-            {trend && (
-              <div className="flex items-center mt-2">
-                <span
-                  className={cn(
-                    "text-xs font-medium",
-                    trend.isPositive 
-                      ? "text-green-600 dark:text-green-400" 
-                      : "text-red-600 dark:text-red-400"
-                  )}
-                >
-                  {trend.isPositive ? "+" : "-"}{Math.abs(trend.value)}%
+        <div className="flex items-center justify-between space-x-4">
+          <div className="flex-1 space-y-1">
+            <p className="text-sm font-medium leading-none text-muted-foreground group-hover:text-foreground/80 transition-colors">{title}</p>
+            <h3 className="text-2xl font-bold tracking-tight text-foreground group-hover:scale-105 transition-transform">
+              {value} {trend && (
+                <span className={cn(
+                  "text-sm font-medium mr-2",
+                  trend.isPositive ? "text-green-500 dark:text-green-400" : "text-red-500 dark:text-red-400"
+                )}>
+                  {trend.isPositive ? "+" : "-"}{Math.abs(trend.value)}% مقارنة بالشهر الماضي
                 </span>
-                <span className="text-xs text-muted-foreground ml-1">مقارنة بالشهر الماضي</span>
-              </div>
-            )}
+              )}
+            </h3>
+            <p className="text-sm text-muted-foreground group-hover:text-foreground/70 transition-colors">{description}</p>
           </div>
-          {icon && (
-            <div className="bg-primary/10 dark:bg-primary/20 p-3 rounded-full text-primary dark:text-primary/90">
-              {icon}
-            </div>
-          )}
+          <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-full group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+            {icon}
+          </div>
         </div>
       </CardContent>
     </Card>

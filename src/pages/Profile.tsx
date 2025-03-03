@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Helmet } from "react-helmet";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -175,15 +174,17 @@ const Profile = () => {
                       {inProgressCoursesData.map((course) => (
                         <div key={course.id} className="border-b last:border-0 pb-4 last:pb-0">
                           <p className="font-medium mb-1">{course.title}</p>
-                          <div className="h-2 bg-gray-100 rounded-full mb-2">
+                          <div className="h-2 bg-muted/30 rounded-full mb-2">
                             <div 
-                              className="h-2 bg-cyber-primary rounded-full" 
+                              className="h-2 bg-gradient-to-r from-sky-500 to-green-500 rounded-full" 
                               style={{ width: `${course.progress}%` }}
                             ></div>
                           </div>
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>{course.progress}% complete</span>
-                            <span>Last accessed {course.lastAccessed}</span>
+                          <div className="flex justify-between">
+                            <Button size="sm" variant="outline">متابعة التعلم</Button>
+                            <span className="text-xs text-muted-foreground self-center">
+                              آخر نشاط {course.lastAccessed}
+                            </span>
                           </div>
                         </div>
                       ))}
@@ -271,16 +272,16 @@ const Profile = () => {
                     {inProgressCoursesData.map((course) => (
                       <div key={course.id} className="border-b last:border-0 pb-4 last:pb-0">
                         <p className="font-medium mb-1">{course.title}</p>
-                        <div className="h-2 bg-gray-100 rounded-full mb-2">
+                        <div className="h-2 bg-muted/30 rounded-full mb-2">
                           <div 
-                            className="h-2 bg-cyber-primary rounded-full" 
+                            className="h-2 bg-gradient-to-r from-sky-500 to-green-500 rounded-full" 
                             style={{ width: `${course.progress}%` }}
                           ></div>
                         </div>
                         <div className="flex justify-between">
-                          <Button size="sm" variant="outline">Resume</Button>
+                          <Button size="sm" variant="outline">متابعة التعلم</Button>
                           <span className="text-xs text-muted-foreground self-center">
-                            Last accessed {course.lastAccessed}
+                            آخر نشاط {course.lastAccessed}
                           </span>
                         </div>
                       </div>

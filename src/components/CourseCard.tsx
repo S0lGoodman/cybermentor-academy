@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Lock, Clock, Award, ArrowRight } from "lucide-react";
+import { Lock, Clock, Award, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CourseCardProps {
@@ -17,6 +17,12 @@ interface CourseCardProps {
   locked?: boolean;
   certified?: boolean;
 }
+
+const levelLabels = {
+  Beginner: "مبتدئ",
+  Intermediate: "متوسط",
+  Advanced: "متقدم",
+};
 
 export const CourseCard: React.FC<CourseCardProps> = ({
   id,
@@ -56,12 +62,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           
           <div className="absolute top-2 right-2 flex gap-2">
             <Badge variant="secondary" className={cn("font-medium", levelColors[level])}>
-              {level}
+              {levelLabels[level]}
             </Badge>
             
             {certified && (
               <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300 font-medium">
-                <Award className="w-3 h-3 mr-1" /> Certified
+                <Award className="w-3 h-3 ml-1" /> معتمدة
               </Badge>
             )}
           </div>
@@ -78,20 +84,20 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           
           {!locked && progress > 0 && (
             <div>
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span className="text-muted-foreground">Progress</span>
+              <div className="flex items-center justify-between text-xs mb-1 flex-row-reverse">
                 <span className="font-medium text-foreground">{progress}%</span>
+                <span className="text-muted-foreground">التقدم</span>
               </div>
-              <Progress value={progress} className="h-1" />
+              <Progress value={progress} className="h-1.5 bg-muted/30" dir="rtl" />
             </div>
           )}
         </CardContent>
         
         <CardFooter className="px-4 py-3 bg-muted dark:bg-muted/20 flex justify-between items-center border-t border-border">
+          <ArrowLeft className="w-4 h-4 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             {locked ? "استكمل المتطلبات الأساسية لفتح الدورة" : "انقر هنا لعرض الدورة"}
           </span>
-          <ArrowRight className="w-4 h-4 text-muted-foreground" />
         </CardFooter>
       </Card>
     </Link>

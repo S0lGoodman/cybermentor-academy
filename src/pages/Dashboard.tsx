@@ -12,13 +12,14 @@ import {
   Award,
   Clock,
   FileText,
-  ChevronRight,
+  ChevronLeft,
   BarChart,
   BookCheck,
   Zap,
 } from "lucide-react";
 import { useSidebar } from "@/components/Sidebar";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const progressData = [
   { name: "أمن الويب", completed: 15, total: 20 },
@@ -68,10 +69,10 @@ const recommendedCourses = [
 ];
 
 const Dashboard = () => {
-  const { setExpanded, setIsAdmin } = useSidebar();
+  const { setExpanded, setIsAdmin, expanded } = useSidebar();
   
   useEffect(() => {
-    setExpanded(true);
+    setExpanded(false);
     setIsAdmin(false);
     
     // Setup animation observations
@@ -101,11 +102,17 @@ const Dashboard = () => {
     <div className="min-h-screen flex" dir="rtl">
       <AdminNavbar />
       
-      <div className="flex-1">
-        <Navbar title="لوحة التحكم" />
+      <div className={cn(
+        "flex-1",
+        !expanded && "overflow-hidden" // Prevent content from showing behind collapsed sidebar
+      )}>
+        <Navbar title="" />
         
         <main className="p-6">
-          <div className="max-w-7xl mx-auto">
+          <div className={cn(
+            "max-w-7xl mx-auto",
+            !expanded && "mr-16" // Add margin when sidebar is collapsed
+          )}>
             {/* Welcome & Stats */}
             <div className="mb-8 animate-on-scroll">
               <h1 className="text-2xl font-bold mb-2">مرحباً بعودتك، جون!</h1>
@@ -114,7 +121,7 @@ const Dashboard = () => {
             
             {/* Continue Learning Section */}
             <div className="mb-8 animate-on-scroll">
-              <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
+              <div className="bg-card p-6 rounded-xl border border-border/50 shadow-sm">
                 <h2 className="text-xl font-semibold mb-4 text-foreground">متابعة التعلم</h2>
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
@@ -168,7 +175,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold">مسار التعلم الحالي</h2>
                 <Button variant="outline" size="sm" className="text-teal-500 border-teal-500/30 hover:bg-teal-500/10">
-                  جميع المسارات <ChevronRight className="mr-1 h-4 w-4" />
+                  جميع المسارات <ChevronLeft className="h-4 w-4 mr-1" />
                 </Button>
               </div>
               
@@ -189,7 +196,7 @@ const Dashboard = () => {
                 <h2 className="text-xl font-semibold">دوراتي</h2>
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/courses">
-                    عرض جميع الدورات <ChevronRight className="mr-1 h-4 w-4" />
+                    عرض جميع الدورات <ChevronLeft className="h-4 w-4 mr-1" />
                   </Link>
                 </Button>
               </div>
@@ -201,54 +208,49 @@ const Dashboard = () => {
               </div>
             </div>
             
-            {/* Recent Activity & Upcoming */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-on-scroll">
-              <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-foreground">النشاط الأخير</h2>
+            {/* Recent Activity & My Mentor */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 animate-on-scroll">
+              <div className="bg-card p-6 rounded-xl border border-border/50 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-semibold text-foreground">المرشد الخاص بي</h2>
                 </div>
-                <div className="space-y-4">
-                  {[
-                    { icon: <BookCheck className="h-4 w-4 text-teal-500" />, text: "Completed Module 3: Cross-Site Scripting", time: "2 hours ago" },
-                    { icon: <FileText className="h-4 w-4 text-teal-500" />, text: "Started Quiz: Network Security Fundamentals", time: "Yesterday" },
-                    { icon: <Zap className="h-4 w-4 text-teal-500" />, text: "Earned Badge: SQL Injection Expert", time: "2 days ago" },
-                    { icon: <BarChart className="h-4 w-4 text-teal-500" />, text: "Weekly progress goal achieved", time: "3 days ago" },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 pb-3 border-b border-border last:border-b-0 last:pb-0">
-                      <div className="flex-shrink-0 bg-gradient-to-r from-teal-500/10 to-lime-500/10 dark:from-teal-500/20 dark:to-lime-500/20 rounded-full p-2">
-                        {item.icon}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{item.text}</p>
-                        <p className="text-xs text-muted-foreground">{item.time}</p>
-                      </div>
-                    </div>
-                  ))}
+                <div className="text-center">
+                  <Avatar className="h-24 w-24 mx-auto mb-4 border-2 border-teal-500/20">
+                    <AvatarImage src="https://github.com/shadcn.png" />
+                    <AvatarFallback>MA</AvatarFallback>
+                  </Avatar>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">محمد أحمد</h3>
+                  <p className="text-sm text-muted-foreground mb-4">خبير في الأمن السيبراني مع أكثر من 10 سنوات من الخبرة في حماية البنية التحتية للشبكات وتطوير الحلول الأمنية المتقدمة</p>
+                  <Button variant="outline" size="sm" className="text-sky-500 border-sky-500/30 hover:bg-sky-500/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-linkedin ml-2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+                    LinkedIn
+                  </Button>
                 </div>
               </div>
-              
-              <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-foreground">المواعيد النهائية القادمة</h2>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { title: "Ethical Hacking Assessment", date: "Tomorrow, 11:59 PM", urgent: true },
-                    { title: "Certificate Exam: Network Security", date: "May 15, 2024", urgent: false },
-                    { title: "Group Project Submission", date: "May 18, 2024", urgent: false },
-                    { title: "Live Workshop: Incident Response", date: "May 22, 2024", urgent: false },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 pb-3 border-b border-border last:border-b-0 last:pb-0">
-                      <div className={cn(
-                        "flex-shrink-0 h-2 w-2 mt-2 rounded-full",
-                        item.urgent ? "bg-red-500" : "bg-gradient-to-r from-teal-500 to-lime-500"
-                      )} />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{item.title}</p>
-                        <p className="text-xs text-muted-foreground">{item.date}</p>
+
+              <div className="lg:col-span-2">
+                <div className="bg-card p-6 rounded-xl border border-border/50 shadow-sm h-full hover:shadow-lg hover:border-border transition-all duration-300">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-foreground">النشاط الأخير</h2>
+                  </div>
+                  <div className="space-y-4">
+                    {[
+                      { icon: <BookCheck className="h-4 w-4 text-teal-500" />, text: "أكملت الوحدة 3: البرمجة النصية عبر المواقع", time: "قبل ساعتين" },
+                      { icon: <FileText className="h-4 w-4 text-teal-500" />, text: "بدأت الاختبار: أساسيات أمن الشبكات", time: "أمس" },
+                      { icon: <Zap className="h-4 w-4 text-teal-500" />, text: "حصلت على شارة: خبير حقن SQL", time: "قبل يومين" },
+                      { icon: <BarChart className="h-4 w-4 text-teal-500" />, text: "تم تحقيق هدف التقدم الأسبوعي", time: "قبل 3 أيام" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 pb-3 border-b border-border last:border-b-0 last:pb-0 hover:bg-muted/30 -mx-6 px-6 py-2 transition-all duration-300 cursor-pointer group">
+                        <div className="flex-shrink-0 bg-gradient-to-r from-teal-500/10 to-lime-500/10 dark:from-teal-500/20 dark:to-lime-500/20 rounded-full p-2 group-hover:from-teal-500/20 group-hover:to-lime-500/20 group-hover:scale-110 transition-all duration-300">
+                          {item.icon}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-foreground group-hover:text-teal-500 transition-colors duration-300">{item.text}</p>
+                          <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">{item.time}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

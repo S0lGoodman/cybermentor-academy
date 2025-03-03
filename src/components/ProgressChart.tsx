@@ -33,8 +33,8 @@ const CustomTooltip = ({
     return (
       <div className="bg-card p-3 border border-border rounded-lg">
         <p className="font-medium text-sm text-foreground">{`${label}`}</p>
-        <p className="text-sm text-sky-500">{`Completed: ${payload[0].value}`}</p>
-        <p className="text-sm text-muted-foreground">{`Total: ${payload[1].value}`}</p>
+        <p className="text-sm text-sky-500">{`المكتمل: ${payload[0].value}`}</p>
+        <p className="text-sm text-muted-foreground">{`الإجمالي: ${payload[1].value}`}</p>
       </div>
     );
   }
@@ -44,7 +44,7 @@ const CustomTooltip = ({
 
 export const ProgressChart: React.FC<ProgressChartProps> = ({
   data,
-  title = "Learning Progress",
+  title = "تقدم التعلم",
   className,
 }) => {
   const { theme } = useTheme();
@@ -57,7 +57,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
         { offset: "100%", color: "#22c55e" }, // green-500
       ]
     },
-    total: isDark ? "#334155" : "#f1f5f9", // slate-700 for dark, slate-100 for light
+    total: isDark ? "#334155" : "#64748b", // slate-700 for dark, slate-500 for light
     grid: isDark ? "rgba(148, 163, 184, 0.1)" : "rgba(51, 65, 85, 0.1)", // slate-400/10 for dark, slate-700/10 for light
     text: isDark ? "#cbd5e1" : "#475569", // slate-300 for dark, slate-600 for light
   };
@@ -112,13 +112,13 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
               <Bar 
                 dataKey="completed" 
                 fill="url(#completedGradient)"
-                name="Completed" 
+                name="المكتمل" 
                 radius={[4, 4, 0, 0]} 
               />
               <Bar 
                 dataKey="total" 
                 fill={chartColors.total}
-                name="Total Modules" 
+                name="إجمالي الوحدات" 
                 radius={[4, 4, 0, 0]} 
               />
             </BarChart>
