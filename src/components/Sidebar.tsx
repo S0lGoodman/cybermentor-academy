@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -54,12 +53,12 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href, active, onCl
       className={cn(
         "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-300 group",
         active 
-          ? "bg-cyber-primary/10 text-cyber-primary font-medium" 
-          : "text-cyber-dark/70 hover:bg-cyber-primary/5 hover:text-cyber-primary"
+          ? "bg-gradient-to-r from-teal-500/20 to-lime-500/20 text-teal-500 font-medium dark:from-teal-500/10 dark:to-lime-500/10" 
+          : "text-muted-foreground hover:bg-gradient-to-r hover:from-teal-500/10 hover:to-lime-500/10 hover:text-teal-500"
       )}
       onClick={onClick}
     >
-      <Icon size={20} className={cn("min-w-[20px]", active ? "text-cyber-primary" : "")} />
+      <Icon size={20} className={cn("min-w-[20px]", active ? "text-teal-500" : "")} />
       {expanded && <span className="text-sm">{label}</span>}
     </Link>
   );
@@ -96,20 +95,20 @@ export const AdminNavbar: React.FC = () => {
   return (
     <aside 
       className={cn(
-        "h-screen sticky top-0 flex flex-col bg-white border-r border-slate-100 shadow-sm transition-all duration-300",
+        "h-screen sticky top-0 flex flex-col bg-background border-r border-border transition-all duration-300",
         expanded ? "w-64" : "w-20"
       )}
     >
       <div className="p-4 flex justify-between items-center">
         <div className={cn("flex items-center gap-2", expanded ? "" : "justify-center w-full")}>
-          <Shield className="text-cyber-primary h-8 w-8" />
-          {expanded && <span className="text-xl font-semibold">سايبر مينتور اكاديمي</span>}
+          <Shield className="text-teal-500 h-8 w-8" />
+          {expanded && <span className="text-xl font-semibold text-foreground">سايبر مينتور اكاديمي</span>}
         </div>
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={() => setExpanded(prev => !prev)}
-          className={cn("", !expanded && "hidden")}
+          className={cn("text-teal-500 hover:bg-teal-500/10", !expanded && "hidden")}
         >
           <ChevronLeft className={cn("h-5 w-5 transition-transform", !expanded && "rotate-180")} />
         </Button>
@@ -118,16 +117,16 @@ export const AdminNavbar: React.FC = () => {
             variant="ghost" 
             size="icon" 
             onClick={() => setExpanded(prev => !prev)}
-            className="absolute -right-4 top-6 h-8 w-8 rounded-full bg-white border border-slate-200 shadow-sm"
+            className="absolute -right-4 top-6 h-8 w-8 rounded-full bg-background border border-border hover:bg-teal-500/10"
           >
-            <Menu className="h-4 w-4" />
+            <Menu className="h-4 w-4 text-teal-500" />
           </Button>
         )}
       </div>
 
       <div className="px-3 py-2">
-        <p className={cn("text-xs text-gray-500 font-medium mb-2 px-3", !expanded && "sr-only")}>
-        القائمة الرئيسية
+        <p className={cn("text-xs text-muted-foreground font-medium mb-2 px-3", !expanded && "sr-only")}>
+          القائمة الرئيسية
         </p>
         <nav className="space-y-1">
           {navItems.map((item) => (
@@ -145,22 +144,22 @@ export const AdminNavbar: React.FC = () => {
       <div className="mt-auto p-4">
         <div 
           className={cn(
-            "flex items-center gap-3 rounded-lg p-3 cursor-pointer hover:bg-cyber-light transition-colors",
+            "flex items-center gap-3 rounded-lg p-3 cursor-pointer hover:bg-gradient-to-r hover:from-teal-500/10 hover:to-lime-500/10 transition-colors",
             !expanded && "flex-col"
           )}
         >
-          <Avatar className="h-10 w-10 border-2 border-cyber-primary/20">
+          <Avatar className="h-10 w-10 border-2 border-teal-500/20">
             <AvatarImage src="https://github.com/shadcn.png" />
             <AvatarFallback>JD</AvatarFallback>
           </Avatar>
           {expanded && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">John Doe</p>
-              <p className="text-xs text-gray-500 truncate">john.doe@example.com</p>
+              <p className="text-sm font-medium text-foreground truncate">John Doe</p>
+              <p className="text-xs text-muted-foreground truncate">john.doe@example.com</p>
             </div>
           )}
           {expanded && (
-            <Button variant="outline" size="sm" onClick={toggleAdmin}>
+            <Button variant="outline" size="sm" className="text-teal-500 border-teal-500/30 hover:bg-teal-500/10" onClick={toggleAdmin}>
               {location.pathname.includes("/admin") ? "Student" : "Admin"}
             </Button>
           )}

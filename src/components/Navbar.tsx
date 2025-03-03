@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -12,9 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bell, Settings, LogOut, User, Search, Shield, Moon, Sun } from "lucide-react";
+import { Bell, Settings, LogOut, User, Search, Shield } from "lucide-react";
 import { useSidebar } from "./Sidebar";
-import { useTheme } from "./ThemeProvider";
+import { ThemeToggle } from "./theme-toggle";
 
 interface NavbarProps {
   title?: string;
@@ -22,10 +21,9 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ title }) => {
   const { isAdmin } = useSidebar();
-  const { theme, setTheme } = useTheme();
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b bg-white/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur-sm">
       <div className="flex h-16 items-center justify-between px-6">
         <div className="flex items-center gap-2">
           {title && <h1 className="text-xl font-semibold">{title}</h1>}
@@ -49,18 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({ title }) => {
         </div>
 
         <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="icon"
-            className="rounded-full"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-          >
-            {theme === "light" ? (
-              <Moon className="h-5 w-5 text-muted-foreground" />
-            ) : (
-              <Sun className="h-5 w-5 text-muted-foreground" />
-            )}
-          </Button>
+          <ThemeToggle />
           <Button variant="outline" size="icon" className="rounded-full">
             <Bell className="h-5 w-5 text-muted-foreground" />
           </Button>

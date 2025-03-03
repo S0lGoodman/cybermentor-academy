@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -59,16 +58,16 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-cyber-background">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       
       {/* Hero Section */}
       <section className="relative py-20 md:py-28 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-cyber-primary/5 to-cyber-secondary/10 z-0" />
+        <div className="absolute inset-0 bg-gradient-to-br from-cyber-primary/5 to-cyber-secondary/10 dark:from-cyber-primary/10 dark:to-cyber-secondary/20 z-0" />
         <div className="relative z-10 max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <div className="animate-on-scroll">
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
+              <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6 text-foreground">
                 Master Cybersecurity Skills with <span className="text-cyber-primary">Expert Guidance</span>
               </h1>
               <p className="text-lg text-muted-foreground mb-8 max-w-lg">
@@ -97,10 +96,10 @@ const Index = () => {
       </section>
       
       {/* Features Section */}
-      <section className="py-20 px-4 bg-white">
+      <section className="py-20 px-4 bg-card">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 animate-on-scroll">
-            <h2 className="text-3xl font-bold mb-4">Why Choose Our Academy</h2>
+            <h2 className="text-3xl font-bold mb-4 text-foreground">Why Choose Our Academy</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Our comprehensive approach to cybersecurity education ensures you're prepared for real-world challenges.
             </p>
@@ -110,12 +109,12 @@ const Index = () => {
             {features.map((feature, index) => (
               <div 
                 key={index} 
-                className="p-6 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
+                className="p-6 rounded-xl bg-card border border-border shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="bg-cyber-primary/10 rounded-full w-12 h-12 flex items-center justify-center mb-4">
                   {feature.icon}
                 </div>
-                <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
+                <h3 className="font-semibold text-lg mb-2 text-foreground">{feature.title}</h3>
                 <p className="text-muted-foreground text-sm">{feature.description}</p>
               </div>
             ))}
@@ -142,22 +141,22 @@ const Index = () => {
       </section>
       
       {/* Footer */}
-      <footer className="py-10 px-4 bg-cyber-dark text-white">
+      <footer className="py-10 px-4 bg-muted">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-6 md:mb-0">
               <Shield className="h-8 w-8 text-cyber-primary mr-2" />
-              <span className="text-2xl font-bold">سايبر مينتور اكاديمي</span>
+              <span className="text-2xl font-bold text-foreground">سايبر مينتور اكاديمي</span>
             </div>
             <div className="flex space-x-6">
-              <Link to="#" className="text-white/70 hover:text-white transition-colors">About</Link>
-              <Link to="#" className="text-white/70 hover:text-white transition-colors">Courses</Link>
-              <Link to="#" className="text-white/70 hover:text-white transition-colors">Contact</Link>
-              <Link to="#" className="text-white/70 hover:text-white transition-colors">Privacy</Link>
+              <Link to="#" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
+              <Link to="#" className="text-muted-foreground hover:text-foreground transition-colors">Courses</Link>
+              <Link to="#" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
+              <Link to="#" className="text-muted-foreground hover:text-foreground transition-colors">Privacy</Link>
             </div>
           </div>
-          <div className="border-t border-white/10 mt-8 pt-8 text-center md:text-left">
-            <p className="text-white/60 text-sm">© 2024 سايبر مينتور اكاديمي. All rights reserved.</p>
+          <div className="border-t border-border mt-8 pt-8 text-center md:text-left">
+            <p className="text-muted-foreground text-sm">© 2024 سايبر مينتور اكاديمي. All rights reserved.</p>
           </div>
         </div>
       </footer>

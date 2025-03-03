@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -31,16 +30,16 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   certified = false,
 }) => {
   const levelColors = {
-    Beginner: "bg-green-100 text-green-800",
-    Intermediate: "bg-blue-100 text-blue-800",
-    Advanced: "bg-purple-100 text-purple-800",
+    Beginner: "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300",
+    Intermediate: "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300",
+    Advanced: "bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300",
   };
 
   return (
     <Link to={locked ? "#" : `/courses/${id}`}>
       <Card className={cn(
-        "overflow-hidden hover-scale transition-all duration-300 h-full flex flex-col",
-        locked ? "opacity-75 cursor-not-allowed" : "cursor-pointer"
+        "overflow-hidden hover:scale-[1.02] transition-all duration-300 h-full flex flex-col bg-card border-border",
+        locked ? "opacity-75 cursor-not-allowed" : "cursor-pointer hover:shadow-lg"
       )}>
         <div className="relative h-36 overflow-hidden">
           <img
@@ -50,8 +49,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           />
           
           {locked && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <Lock className="w-10 h-10 text-white" />
+            <div className="absolute inset-0 bg-background/50 dark:bg-background/80 backdrop-blur-sm flex items-center justify-center">
+              <Lock className="w-10 h-10 text-foreground" />
             </div>
           )}
           
@@ -61,7 +60,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
             </Badge>
             
             {certified && (
-              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 font-medium">
+              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300 font-medium">
                 <Award className="w-3 h-3 mr-1" /> Certified
               </Badge>
             )}
@@ -69,7 +68,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         </div>
         
         <CardContent className="flex-1 p-4">
-          <h3 className="text-lg font-semibold mb-2 line-clamp-1">{title}</h3>
+          <h3 className="text-lg font-semibold mb-2 line-clamp-1 text-foreground">{title}</h3>
           <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{description}</p>
           
           <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
@@ -81,14 +80,14 @@ export const CourseCard: React.FC<CourseCardProps> = ({
             <div>
               <div className="flex items-center justify-between text-xs mb-1">
                 <span className="text-muted-foreground">Progress</span>
-                <span className="font-medium">{progress}%</span>
+                <span className="font-medium text-foreground">{progress}%</span>
               </div>
               <Progress value={progress} className="h-1" />
             </div>
           )}
         </CardContent>
         
-        <CardFooter className="px-4 py-3 bg-muted/30 flex justify-between items-center border-t">
+        <CardFooter className="px-4 py-3 bg-muted dark:bg-muted/20 flex justify-between items-center border-t border-border">
           <span className="text-xs font-medium text-muted-foreground">
             {locked ? "استكمل المتطلبات الأساسية لفتح الدورة" : "انقر هنا لعرض الدورة"}
           </span>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -23,9 +22,9 @@ export const PathTracker: React.FC<PathTrackerProps> = ({
   className,
 }) => {
   return (
-    <Card className={cn("overflow-hidden", className)}>
+    <Card className={cn("overflow-hidden bg-card border-border", className)}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium">{title}</CardTitle>
+        <CardTitle className="text-lg font-medium text-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-1">
@@ -34,16 +33,16 @@ export const PathTracker: React.FC<PathTrackerProps> = ({
               key={step.id}
               className={cn(
                 "flex items-start py-3 pl-2 rounded-lg transition-colors",
-                step.current && "bg-cyber-primary/5"
+                step.current && "bg-gradient-to-r from-teal-500/10 to-lime-500/10"
               )}
             >
               <div className="flex-shrink-0 mr-3 mt-0.5">
                 {step.completed ? (
-                  <CheckCircle className="h-5 w-5 text-cyber-primary" />
+                  <CheckCircle className="h-5 w-5 text-teal-500" />
                 ) : (
                   <Circle className={cn(
                     "h-5 w-5", 
-                    step.current ? "text-cyber-primary" : "text-muted-foreground/40"
+                    step.current ? "text-teal-500" : "text-muted-foreground/40"
                   )} />
                 )}
               </div>
@@ -52,7 +51,7 @@ export const PathTracker: React.FC<PathTrackerProps> = ({
                 <p className={cn(
                   "text-sm font-medium",
                   step.completed && "text-muted-foreground/70 line-through",
-                  step.current && "text-cyber-primary"
+                  step.current && "text-teal-500"
                 )}>
                   {step.title}
                 </p>

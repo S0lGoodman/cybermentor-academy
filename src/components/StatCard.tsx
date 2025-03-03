@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -24,12 +23,12 @@ export const StatCard: React.FC<StatCardProps> = ({
   className,
 }) => {
   return (
-    <Card className={cn("overflow-hidden", className)}>
+    <Card className={cn("overflow-hidden bg-card border-border hover:shadow-md transition-all duration-300", className)}>
       <CardContent className="p-6">
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">{title}</p>
-            <h3 className="text-2xl font-bold mb-1">{value}</h3>
+            <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
+            <h3 className="text-2xl font-bold mb-1 text-foreground">{value}</h3>
             {description && (
               <p className="text-sm text-muted-foreground">{description}</p>
             )}
@@ -38,7 +37,9 @@ export const StatCard: React.FC<StatCardProps> = ({
                 <span
                   className={cn(
                     "text-xs font-medium",
-                    trend.isPositive ? "text-green-600" : "text-red-600"
+                    trend.isPositive 
+                      ? "text-green-600 dark:text-green-400" 
+                      : "text-red-600 dark:text-red-400"
                   )}
                 >
                   {trend.isPositive ? "+" : "-"}{Math.abs(trend.value)}%
@@ -48,7 +49,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             )}
           </div>
           {icon && (
-            <div className="bg-cyber-primary/10 p-3 rounded-full">
+            <div className="bg-primary/10 dark:bg-primary/20 p-3 rounded-full text-primary dark:text-primary/90">
               {icon}
             </div>
           )}
