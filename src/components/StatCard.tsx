@@ -7,9 +7,9 @@ interface StatCardProps {
   value: string;
   description?: string;
   icon?: React.ReactNode;
-  trend?: {
-    value: number;
-    isPositive: boolean;
+  trend: {
+    value: string;
+    label: string;
   };
   className?: string;
 }
@@ -22,6 +22,8 @@ export const StatCard: React.FC<StatCardProps> = ({
   trend,
   className,
 }) => {
+  const isPositive = trend.value.startsWith('+');
+
   return (
     <Card className={cn(
       "overflow-hidden bg-card border-border group hover:shadow-lg hover:scale-[1.02] hover:bg-gradient-to-br hover:from-background hover:to-muted transition-all duration-300",
@@ -32,15 +34,15 @@ export const StatCard: React.FC<StatCardProps> = ({
           <div className="flex-1 space-y-1">
             <p className="text-sm font-medium leading-none text-muted-foreground group-hover:text-foreground/80 transition-colors">{title}</p>
             <h3 className="text-2xl font-bold tracking-tight text-foreground group-hover:scale-105 transition-transform">
-              {value} {trend && (
-                <span className={cn(
-                  "text-sm font-medium mr-2",
-                  trend.isPositive ? "text-green-500 dark:text-green-400" : "text-red-500 dark:text-red-400"
-                )}>
-                  {trend.isPositive ? "+" : "-"}{Math.abs(trend.value)}% مقارنة بالشهر الماضي
-                </span>
-              )}
+              {value}
             </h3>
+            <p className={cn(
+              "text-sm mt-2",
+              isPositive ? "text-teal-500" : "text-red-500"
+            )}>
+              <span>{trend.value}</span>
+              <span className="text-muted-foreground ml-1">{trend.label}</span>
+            </p>
             <p className="text-sm text-muted-foreground group-hover:text-foreground/70 transition-colors">{description}</p>
           </div>
           <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-full group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">

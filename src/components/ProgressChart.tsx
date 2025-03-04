@@ -1,128 +1,94 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  TooltipProps,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { cn } from "@/lib/utils";
-import { useTheme } from "@/lib/theme-provider";
+import { useSidebar } from './Sidebar';
 
 interface ProgressChartProps {
-  data: {
+  data: Array<{
     name: string;
-    completed: number;
-    total: number;
-  }[];
+    completed: string;
+    total: string;
+  }>;
   title?: string;
-  className?: string;
 }
 
-const CustomTooltip = ({
-  active,
-  payload,
-  label,
-}: TooltipProps<number, string>) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-card p-3 border border-border rounded-lg">
-        <p className="font-medium text-sm text-foreground">{`${label}`}</p>
-        <p className="text-sm text-sky-500">{`المكتمل: ${payload[0].value}`}</p>
-        <p className="text-sm text-muted-foreground">{`الإجمالي: ${payload[1].value}`}</p>
-      </div>
-    );
-  }
-
-  return null;
-};
-
-export const ProgressChart: React.FC<ProgressChartProps> = ({
-  data,
-  title = "تقدم التعلم",
-  className,
-}) => {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-
-  const chartColors = {
-    completed: {
-      gradient: [
-        { offset: "0%", color: "#0ea5e9" },  // sky-500
-        { offset: "100%", color: "#22c55e" }, // green-500
-      ]
-    },
-    total: isDark ? "#334155" : "#64748b", // slate-700 for dark, slate-500 for light
-    grid: isDark ? "rgba(148, 163, 184, 0.1)" : "rgba(51, 65, 85, 0.1)", // slate-400/10 for dark, slate-700/10 for light
-    text: isDark ? "#cbd5e1" : "#475569", // slate-300 for dark, slate-600 for light
-  };
+export const ProgressChart: React.FC<ProgressChartProps> = ({ data, title }) => {
+  const { isAdmin } = useSidebar();
+  const maxValue = Math.max(...data.map(item => parseInt(item.total)));
+  const scale = 80 / maxValue; // 80 is our max height in the chart
 
   return (
-    <Card className={cn("overflow-hidden bg-card border-border", className)}>
+    <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium text-foreground">{title}</CardTitle>
+        {title && <CardTitle className="text-lg font-medium">{title}</CardTitle>}
       </CardHeader>
       <CardContent>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={data}
-              margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
-              barGap={0}
-              barSize={20}
-            >
-              <defs>
-                <linearGradient id="completedGradient" x1="0" y1="0" x2="1" y2="0">
-                  {chartColors.completed.gradient.map((stop) => (
-                    <stop key={stop.offset} offset={stop.offset} stopColor={stop.color} />
-                  ))}
-                </linearGradient>
-              </defs>
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                vertical={false} 
-                opacity={0.2}
-                stroke={chartColors.grid} 
-              />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fontSize: 12, fill: chartColors.text }}
-              />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fontSize: 12, fill: chartColors.text }}
-              />
-              <Tooltip 
-                content={<CustomTooltip />}
-                cursor={false}
-              />
-              <Legend 
-                wrapperStyle={{ 
-                  color: chartColors.text
-                }} 
-              />
-              <Bar 
-                dataKey="completed" 
-                fill="url(#completedGradient)"
-                name="المكتمل" 
-                radius={[4, 4, 0, 0]} 
-              />
-              <Bar 
-                dataKey="total" 
-                fill={chartColors.total}
-                name="إجمالي الوحدات" 
-                radius={[4, 4, 0, 0]} 
-              />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="relative h-[240px]">
+          <div className="absolute inset-0 flex items-end justify-around gap-6">
+            {data.map((item, i) => {
+              const completedHeight = parseInt(item.completed) * scale;
+              const totalHeight = parseInt(item.total) * scale;
+              
+              return (
+                <div key={i} className="relative flex-1">
+                  <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1">
+                    <div 
+                      className="w-8 bg-teal-500/20 rounded-t-lg"
+                      style={{ height: `${completedHeight}%` }}
+                    />
+                    <div 
+                      className="w-8 bg-slate-500/20 rounded-t-lg"
+                      style={{ height: `${totalHeight}%` }}
+                    />
+                  </div>
+                  <div className="absolute -bottom-6 inset-x-0 text-center">
+                    <p className="text-sm font-medium">{item.name}</p>
+                  </div>
+                  <div 
+                    className="absolute -top-6 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur-sm border rounded-lg px-2 py-1 text-xs"
+                    style={{ 
+                      opacity: 0,
+                      transition: '0.2s',
+                      pointerEvents: 'none'
+                    }}
+                  >
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-muted-foreground">
+                      {isAdmin ? "Completed" : "المكتمل"}: {item.completed}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {isAdmin ? "Total" : "الإجمالي"}: {item.total}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="absolute left-0 inset-y-6 flex flex-col justify-between">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-6 text-right">
+                  {Math.round((maxValue / 4) * (4 - i))}
+                </span>
+                <div className="w-1 h-px bg-border" />
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="mt-8 flex items-center justify-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-sm bg-teal-500/20" />
+            <span className="text-sm text-muted-foreground">
+              {isAdmin ? "Completed" : "المكتمل"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-sm bg-slate-500/20" />
+            <span className="text-sm text-muted-foreground">
+              {isAdmin ? "Total Units" : "إجمالي الوحدات"}
+            </span>
+          </div>
         </div>
       </CardContent>
     </Card>

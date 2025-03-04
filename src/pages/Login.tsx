@@ -1,30 +1,37 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle } from "lucide-react";
+import { useSidebar } from "../components/Sidebar";
 
 export const Login = () => {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const { setIsAdmin } = useSidebar();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate login
-    setTimeout(() => {
-      setIsSuccess(true);
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1500);
-    }, 1000);
+    // For testing purposes, check email to determine role
+    if (email === "admin@test.com") {
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("userRole", "admin");
+      setIsAdmin(true);
+      navigate("/admin/dashboard");
+    } else if (email === "student@test.com") {
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("userRole", "student");
+      setIsAdmin(false);
+      navigate("/student/dashboard");
+    }
   };
 
   return (
@@ -84,7 +91,7 @@ export const Login = () => {
           <AnimatePresence mode="wait">
             {!isSuccess && (
               <motion.form 
-                onSubmit={handleSubmit} 
+                onSubmit={handleLogin} 
                 className="space-y-4"
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
@@ -146,6 +153,13 @@ export const Login = () => {
               </motion.form>
             )}
           </AnimatePresence>
+          
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            <p>Test Accounts:</p>
+            <p>Student: student@test.com</p>
+            <p>Admin: admin@test.com</p>
+            <p>(Any password will work)</p>
+          </div>
         </CardContent>
       </Card>
     </div>

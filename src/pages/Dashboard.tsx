@@ -1,12 +1,12 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { AdminNavbar } from "@/components/Sidebar";
-import { Navbar } from "@/components/Navbar";
-import { CourseCard } from "@/components/CourseCard";
-import { ProgressChart } from "@/components/ProgressChart";
-import { StatCard } from "@/components/StatCard";
-import { PathTracker } from "@/components/PathTracker";
-import { Button } from "@/components/ui/button";
+import { AdminNavbar } from "../components/Sidebar";
+import { Navbar } from "../components/Navbar";
+import { CourseCard } from "../components/CourseCard";
+import { ProgressChart } from "../components/ProgressChart";
+import { StatCard } from "../components/StatCard";
+import { PathTracker } from "../components/PathTracker";
+import { Button } from "../components/ui/button";
 import {
   BookOpen,
   Award,
@@ -17,16 +17,16 @@ import {
   BookCheck,
   Zap,
 } from "lucide-react";
-import { useSidebar } from "@/components/Sidebar";
-import { cn } from "@/lib/utils";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useSidebar } from "../components/Sidebar";
+import { cn } from "../lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
 
 const progressData = [
-  { name: "أمن الويب", completed: 15, total: 20 },
-  { name: "الدفاع عن الشبكات", completed: 8, total: 15 },
-  { name: "القرصنة الأخلاقية", completed: 12, total: 25 },
-  { name: "التحليل الجنائي", completed: 5, total: 18 },
-  { name: "التشفير", completed: 10, total: 12 },
+  { name: "أمن الويب", completed: "15", total: "20" },
+  { name: "الدفاع عن الشبكات", completed: "8", total: "15" },
+  { name: "القرصنة الأخلاقية", completed: "12", total: "25" },
+  { name: "التحليل الجنائي", completed: "5", total: "18" },
+  { name: "التشفير", completed: "10", total: "12" },
 ];
 
 const pathSteps = [
@@ -148,25 +148,25 @@ const Dashboard = () => {
                 title="الدورات المسجلة"
                 value="7"
                 icon={<BookOpen className="h-5 w-5 text-teal-500" />}
-                trend={{ value: 2, isPositive: true }}
+                trend={{ value: "+2", label: "هذا الشهر" }}
               />
               <StatCard
                 title="الدورات المكتملة"
                 value="3"
                 icon={<BookCheck className="h-5 w-5 text-teal-500" />}
-                trend={{ value: 1, isPositive: true }}
+                trend={{ value: "+1", label: "هذا الشهر" }}
               />
               <StatCard
                 title="ساعات التعلم"
                 value="48"
                 icon={<Clock className="h-5 w-5 text-teal-500" />}
-                trend={{ value: 12, isPositive: true }}
+                trend={{ value: "+12", label: "هذا الأسبوع" }}
               />
               <StatCard
                 title="التقييمات المكتملة"
                 value="15"
                 icon={<FileText className="h-5 w-5 text-teal-500" />}
-                trend={{ value: 5, isPositive: true }}
+                trend={{ value: "+5", label: "هذا الأسبوع" }}
               />
             </div>
             

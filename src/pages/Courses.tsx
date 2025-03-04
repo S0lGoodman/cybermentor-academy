@@ -1,15 +1,15 @@
 import React from "react";
 import { Helmet } from "react-helmet";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Breadcrumb } from "@/components/Breadcrumb";
-import CourseCard from "@/components/CourseCard";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Breadcrumb } from "../components/Breadcrumb";
+import { CourseCard } from "../components/CourseCard";
 import { ChevronLeft, Lock, BookOpen, CheckCircle2 } from "lucide-react";
-import { useSidebar } from "@/components/Sidebar";
-import { AdminNavbar } from "@/components/Sidebar";
-import { Navbar } from "@/components/Navbar";
-import { cn } from "@/lib/utils";
+import { useSidebar } from "../components/Sidebar";
+import { AdminNavbar } from "../components/Sidebar";
+import { Navbar } from "../components/Navbar";
+import { cn } from "../lib/utils";
 
 // Helper function to create URL-friendly slugs
 const createSlug = (text: string) => {
@@ -271,25 +271,26 @@ const userProgress = {
   }
 };
 
-const Courses = () => {
+export const Courses = () => {
   const { expanded } = useSidebar();
   const { phaseId } = useParams();
 
-  // If no phaseId is provided, redirect to level-1
-  if (!phaseId) {
-    return <Navigate to="/courses/level-1" replace />;
-  }
+  // If no phaseId is provided, show the first phase
+  const currentPhase = phaseId 
+    ? learningPath.find(phase => phase.id === phaseId)
+    : learningPath[0]; // Default to first phase
 
-  // Find the current phase based on URL parameter
-  const currentPhase = learningPath.find(phase => phase.id === phaseId);
-  const currentPhaseIndex = learningPath.findIndex(phase => phase.id === phaseId);
+  const currentPhaseIndex = phaseId
+    ? learningPath.findIndex(phase => phase.id === phaseId)
+    : 0;
 
   // Generate breadcrumb items
   const breadcrumbItems = [
-    { label: "الرئيسية", href: "/dashboard" },
-    ...learningPath.slice(0, currentPhaseIndex + 2).map((phase, index) => ({
+    { label: "الرئيسية", href: "/student/dashboard" },
+    { label: "الدورات", href: "/student/courses" },
+    ...learningPath.slice(0, currentPhaseIndex + 1).map((phase) => ({
       label: phase.phase,
-      href: phase.locked ? undefined : `/courses/${phase.id}`,
+      href: phase.locked ? undefined : `/student/courses/${phase.id}`,
       locked: phase.locked
     }))
   ];
@@ -349,7 +350,7 @@ const Courses = () => {
                     asChild={!nextPhase.locked}
                   >
                     {!nextPhase.locked ? (
-                      <Link to={`/courses/${nextPhase.id}`}>
+                      <Link to={`/student/courses/${nextPhase.id}`}>
                         المرحلة التالية
                         <ChevronLeft className="w-4 h-4" />
                       </Link>
@@ -367,20 +368,21 @@ const Courses = () => {
             {/* Current Phase Courses */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
               {currentPhaseCourses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  id={course.id}
-                  title={course.title}
-                  description={course.description}
-                  image={course.image}
-                  progress={userProgress.courseProgress?.[course.id] || 0}
-                  level={course.level}
-                  duration={course.duration}
-                  locked={course.locked}
-                  certified={course.certified}
-                  phaseId={phaseId}
-                  slug={course.slug}
-                />
+                <div key={course.id} className="h-full">
+                  <CourseCard
+                    id={course.id}
+                    title={course.title}
+                    description={course.description}
+                    image={course.image}
+                    progress={userProgress.courseProgress?.[course.id] || 0}
+                    level={course.level}
+                    duration={course.duration}
+                    locked={course.locked}
+                    certified={course.certified}
+                    phaseId={currentPhase.id}
+                    slug={course.slug}
+                  />
+                </div>
               ))}
             </div>
 
@@ -393,8 +395,12 @@ const Courses = () => {
                 <CardContent>
                   <h3 className="text-lg font-semibold mb-2">{nextPhase.phase}</h3>
                   <p className="text-muted-foreground mb-4">{nextPhase.description}</p>
-                  <Button variant="outline" asChild>
-                    <Link to={`/courses/${nextPhase.id}`} className="gap-2 hover:bg-[#00C896] hover:text-white transition-colors">
+                  <Button 
+                    variant="outline" 
+                    className="hover:bg-[#00C896] hover:text-white transition-colors"
+                    asChild
+                  >
+                    <Link to={`/student/courses/${nextPhase.id}`} className="gap-2">
                       استعراض المرحلة القادمة
                       <ChevronLeft className="w-4 h-4" />
                     </Link>
@@ -408,5 +414,3 @@ const Courses = () => {
     </div>
   );
 };
-
-export default Courses;

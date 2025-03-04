@@ -169,8 +169,8 @@ const ContentTypeIcon = ({ type }: { type: string }) => {
   }
 };
 
-const CourseDetails = () => {
-  const { courseId } = useParams();
+export const CourseDetails = () => {
+  const { courseId, phaseId } = useParams();
   const [currentItemId, setCurrentItemId] = useState("1-1");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
@@ -297,7 +297,7 @@ const CourseDetails = () => {
         <div className="h-12 border-b bg-background/95 backdrop-blur flex items-center px-4">
           <nav className="flex items-center gap-1 text-sm text-muted-foreground">
             <Link 
-              to="/dashboard" 
+              to="/student/dashboard" 
               className="flex items-center gap-1 hover:text-foreground transition-colors"
             >
               <Home className="w-4 h-4" />
@@ -305,7 +305,15 @@ const CourseDetails = () => {
             </Link>
             <ChevronLeftIcon className="w-4 h-4 mx-1" />
             <Link 
-              to="/courses/level-1/"
+              to="/student/courses"
+              className="flex items-center gap-1 hover:text-foreground transition-colors"
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span>الدورات</span>
+            </Link>
+            <ChevronLeftIcon className="w-4 h-4 mx-1" />
+            <Link 
+              to={`/student/courses/${phaseId}`}
               className="flex items-center gap-1 hover:text-foreground transition-colors"
             >
               <GraduationCap className="w-4 h-4" />
@@ -518,5 +526,3 @@ const CourseDetails = () => {
     </div>
   );
 };
-
-export default CourseDetails;

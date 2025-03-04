@@ -46,19 +46,23 @@ interface NavItemProps {
 
 const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href, active, onClick }) => {
   const { expanded } = useSidebar();
+  const location = useLocation();
+  
+  // Check if the current path starts with the href (for nested routes)
+  const isActive = active || location.pathname.startsWith(href);
 
   return (
     <Link
       to={href}
       className={cn(
         "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-300 group relative",
-        active 
+        isActive 
           ? "bg-gradient-to-r from-teal-500/20 to-lime-500/20 text-teal-500 font-medium dark:from-teal-500/10 dark:to-lime-500/10" 
           : "text-muted-foreground hover:bg-gradient-to-r hover:from-teal-500/10 hover:to-lime-500/10 hover:text-teal-500"
       )}
       onClick={onClick}
     >
-      <Icon size={20} className={cn("min-w-[20px]", active ? "text-teal-500" : "")} />
+      <Icon size={20} className={cn("min-w-[20px]", isActive ? "text-teal-500" : "")} />
       <span className={cn(
         "text-sm whitespace-nowrap",
         expanded ? "opacity-100 visible" : "opacity-0 invisible w-0"
@@ -91,15 +95,15 @@ export const AdminNavbar: React.FC = () => {
   }, [expanded, setExpanded]);
 
   const studentNavItems = [
-    { icon: Home, label: "الرئيسية", href: "/dashboard" },
-    { icon: BookOpen, label: "الدورات", href: "/courses" },
-    { icon: FlaskConical, label: "المختبرات", href: "/labs" },
-    { icon: Award, label: "الإنجازات", href: "/achievements" },
-    { icon: Settings, label: "الإعدادات", href: "/settings" },
+    { icon: Home, label: "الرئيسية", href: "/student/dashboard" },
+    { icon: BookOpen, label: "الدورات", href: "/student/courses" },
+    { icon: FlaskConical, label: "المختبرات", href: "/student/labs" },
+    { icon: Award, label: "الإنجازات", href: "/student/achievements" },
+    { icon: Settings, label: "الإعدادات", href: "/student/settings" },
   ];
 
   const adminNavItems = [
-    { icon: Home, label: "Dashboard", href: "/admin" },
+    { icon: Home, label: "Dashboard", href: "/admin/dashboard" },
     { icon: Users, label: "Students", href: "/admin/students" },
     { icon: BookOpen, label: "Courses", href: "/admin/courses" },
     { icon: Shield, label: "Security", href: "/admin/security" },
@@ -111,16 +115,19 @@ export const AdminNavbar: React.FC = () => {
 
   const toggleAdmin = () => {
     setIsAdmin(prev => !prev);
-    window.location.href = location.pathname.includes("/admin") ? "/dashboard" : "/admin";
+    window.location.href = location.pathname.includes("/admin") ? "/student/dashboard" : "/admin/dashboard";
   };
 
   return (
     <aside 
       ref={sidebarRef}
       className={cn(
-        "fixed top-0 right-0 z-40 h-screen border-l border-border transition-all duration-300 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        "fixed top-0 z-40 h-screen border-border transition-all duration-300 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
         "dark:bg-muted/10 dark:supports-[backdrop-filter]:bg-background/10",
-        expanded ? "w-64" : "w-16"
+        expanded ? "w-64" : "w-16",
+        location.pathname.includes("/admin") 
+          ? "left-0 border-r" 
+          : "right-0 border-l"
       )}
     >
       <div className="p-4 flex justify-between items-center">
@@ -140,7 +147,7 @@ export const AdminNavbar: React.FC = () => {
           />
           {expanded && (
             <span className="text-xl font-semibold text-foreground">
-              سايبر مينتور اكاديمي
+              Cyber Mentor Academy
             </span>
           )}
         </div>
@@ -152,7 +159,10 @@ export const AdminNavbar: React.FC = () => {
           size="icon" 
           data-expand-trigger="true"
           onClick={() => setExpanded(true)}
-          className="absolute -left-10 top-6 h-8 w-8 rounded-full bg-background border border-border hover:bg-teal-500/10"
+          className={cn(
+            "absolute top-6 h-8 w-8 rounded-full bg-background border border-border hover:bg-teal-500/10",
+            location.pathname.includes("/admin") ? "-right-10" : "-left-10"
+          )}
         >
           <Menu className="h-4 w-4 text-teal-500" />
         </Button>
@@ -163,7 +173,7 @@ export const AdminNavbar: React.FC = () => {
           "text-xs text-muted-foreground font-medium mb-2 px-3 transition-all duration-300",
           !expanded && "opacity-0 absolute"
         )}>
-          القائمة الرئيسية
+          Main Menu
         </p>
         <nav className="space-y-1">
           {navItems.map((item) => (
@@ -172,7 +182,7 @@ export const AdminNavbar: React.FC = () => {
               icon={item.icon}
               label={item.label}
               href={item.href}
-              active={location.pathname === item.href}
+              active={item.href === location.pathname}
             />
           ))}
         </nav>

@@ -1,40 +1,199 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import Courses from "./pages/Courses";
-import CourseDetails from "./pages/CourseDetails";
-import Profile from "./pages/Profile";
-import NotFound from "./pages/NotFound";
-import Login from "./pages/Login";
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "./components/ThemeProvider";
 import { SidebarProvider } from "./components/Sidebar";
+import { Login } from "./pages/Login";
+import { AdminDashboard } from "./pages/AdminDashboard";
+import { StudentDashboard } from "./pages/StudentDashboard";
+import { Toaster } from "./components/ui/toaster";
+import { Toaster as Sonner } from "./components/ui/sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Dashboard from "./pages/Dashboard";
+import { Courses } from "./pages/Courses";
+import { CourseDetails } from "./pages/CourseDetails";
+import { Profile } from "./pages/Profile";
+import { NotFound } from "./pages/NotFound";
+import { Labs } from "./pages/Labs";
+import { Achievements } from "./pages/Achievements";
+import { Settings } from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <SidebarProvider>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/courses" element={<Courses />} />
-            <Route path="/courses/:phaseId" element={<Courses />} />
-            <Route path="/courses/:phaseId/:courseId" element={<CourseDetails />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </SidebarProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+// Protected Route wrapper
+const ProtectedRoute = ({ children, isAdmin }: { children: React.ReactNode; isAdmin?: boolean }) => {
+  // For testing purposes, we'll simulate authentication with localStorage
+  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  const userRole = localStorage.getItem("userRole");
+
+  // If not authenticated, redirect to login
+  if (!isAuthenticated || !userRole) {
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("userRole");
+    return <Navigate to="/login" replace />;
+  }
+
+  // Check role-based access
+  if (isAdmin && userRole !== "admin") {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin && userRole !== "student") {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+          <SidebarProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Navigate to="/login" />} />
+
+                {/* Admin Routes */}
+                <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
+                <Route 
+                  path="/admin/dashboard" 
+                  element={
+                    <ProtectedRoute isAdmin>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/courses" 
+                  element={
+                    <ProtectedRoute isAdmin>
+                      <Courses />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/courses/:courseId" 
+                  element={
+                    <ProtectedRoute isAdmin>
+                      <CourseDetails />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/profile" 
+                  element={
+                    <ProtectedRoute isAdmin>
+                      <Profile />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/labs" 
+                  element={
+                    <ProtectedRoute isAdmin>
+                      <Labs />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/achievements" 
+                  element={
+                    <ProtectedRoute isAdmin>
+                      <Achievements />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/settings" 
+                  element={
+                    <ProtectedRoute isAdmin>
+                      <Settings />
+                    </ProtectedRoute>
+                  } 
+                />
+
+                {/* Student Routes */}
+                <Route path="/student" element={<Navigate to="/student/dashboard" />} />
+                <Route 
+                  path="/student/dashboard" 
+                  element={
+                    <ProtectedRoute isAdmin={false}>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/student/courses" 
+                  element={
+                    <ProtectedRoute isAdmin={false}>
+                      <Courses />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/student/courses/:phaseId" 
+                  element={
+                    <ProtectedRoute isAdmin={false}>
+                      <Courses />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/student/courses/:phaseId/:courseId" 
+                  element={
+                    <ProtectedRoute isAdmin={false}>
+                      <CourseDetails />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/student/profile" 
+                  element={
+                    <ProtectedRoute isAdmin={false}>
+                      <Profile />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/student/labs" 
+                  element={
+                    <ProtectedRoute isAdmin={false}>
+                      <Labs />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/student/achievements" 
+                  element={
+                    <ProtectedRoute isAdmin={false}>
+                      <Achievements />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/student/settings" 
+                  element={
+                    <ProtectedRoute isAdmin={false}>
+                      <Settings />
+                    </ProtectedRoute>
+                  } 
+                />
+
+                {/* 404 Route */}
+                <Route path="*" element={<Navigate to="/login" />} />
+              </Routes>
+            </BrowserRouter>
+          </SidebarProvider>
+        </ThemeProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

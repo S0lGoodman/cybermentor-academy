@@ -24,7 +24,10 @@ export const Navbar: React.FC<NavbarProps> = ({ title }) => {
 
   return (
     <header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur-sm">
-      <div className="flex h-16 items-center justify-between px-6">
+      <div className={cn(
+        "flex h-16 items-center justify-between px-6",
+        isAdmin ? "ml-16" : "mr-16"
+      )}>
         <div className="flex items-center gap-2">
           {title && <h1 className="text-xl font-semibold">{title}</h1>}
         </div>
@@ -34,7 +37,7 @@ export const Navbar: React.FC<NavbarProps> = ({ title }) => {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/70" />
             <Input
               type="search"
-              placeholder="ابحث عن الدورات والوحدات "
+              placeholder={isAdmin ? "Search courses, students, or modules..." : "Search courses and modules..."}
               className="w-full rounded-full bg-background pl-8 focus-visible:ring-cyber-primary/30"
             />
           </div>
@@ -64,21 +67,21 @@ export const Navbar: React.FC<NavbarProps> = ({ title }) => {
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link to={isAdmin ? "/admin/profile" : "/profile"} className="cursor-pointer flex items-center">
+                <Link to={isAdmin ? "/admin/profile" : "/student/profile"} className="cursor-pointer flex items-center">
                   <User className="mr-2 h-4 w-4" />
-                  الملف الشخصي
+                  Profile
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to={isAdmin ? "/admin/settings" : "/settings"} className="cursor-pointer flex items-center">
+                <Link to={isAdmin ? "/admin/settings" : "/student/settings"} className="cursor-pointer flex items-center">
                   <Settings className="mr-2 h-4 w-4" />
-                  الإعدادات
+                  Settings
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
                 <LogOut className="mr-2 h-4 w-4" />
-                تسجيل الخروج
+                Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

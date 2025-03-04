@@ -1,11 +1,10 @@
-
 import React, { useEffect } from "react";
-import { AdminNavbar } from "@/components/Sidebar";
-import { Navbar } from "@/components/Navbar";
-import { ProgressChart } from "@/components/ProgressChart";
-import { StatCard } from "@/components/StatCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { AdminNavbar } from "../components/Sidebar";
+import { Navbar } from "../components/Navbar";
+import { ProgressChart } from "../components/ProgressChart";
+import { StatCard } from "../components/StatCard";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Button } from "../components/ui/button";
 import {
   Users,
   BookOpen,
@@ -19,8 +18,8 @@ import {
   CheckCircle,
   Search,
 } from "lucide-react";
-import { useSidebar } from "@/components/Sidebar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSidebar } from "../components/Sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -28,8 +27,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+} from "../components/ui/table";
+import { Badge } from "../components/ui/badge";
 
 const activityData = [
   { name: "Students", completed: 45, total: 50 },
@@ -39,7 +38,7 @@ const activityData = [
   { name: "Certifications", completed: 30, total: 40 },
 ];
 
-const AdminDashboard = () => {
+export const AdminDashboard = () => {
   const { setExpanded, setIsAdmin } = useSidebar();
   
   useEffect(() => {
@@ -74,9 +73,9 @@ const AdminDashboard = () => {
       <AdminNavbar />
       
       <div className="flex-1">
-        <Navbar title="Admin Dashboard" />
+        <Navbar />
         
-        <main className="p-6">
+        <main className="p-6 ml-16">
           <div className="max-w-7xl mx-auto">
             {/* Admin Stats Overview */}
             <div className="mb-8 animate-on-scroll">
@@ -89,25 +88,25 @@ const AdminDashboard = () => {
                 title="Total Students"
                 value="485"
                 icon={<Users className="h-5 w-5 text-cyber-primary" />}
-                trend={{ value: 12, isPositive: true }}
+                trend={{ value: "+12%", label: "vs last month" }}
               />
               <StatCard
                 title="Active Courses"
                 value="24"
                 icon={<BookOpen className="h-5 w-5 text-cyber-primary" />}
-                trend={{ value: 3, isPositive: true }}
+                trend={{ value: "+3%", label: "vs last month" }}
               />
               <StatCard
                 title="Certifications Issued"
                 value="138"
                 icon={<Award className="h-5 w-5 text-cyber-primary" />}
-                trend={{ value: 7, isPositive: true }}
+                trend={{ value: "+7%", label: "vs last month" }}
               />
               <StatCard
                 title="Security Alerts"
                 value="3"
                 icon={<Shield className="h-5 w-5 text-red-500" />}
-                trend={{ value: 2, isPositive: false }}
+                trend={{ value: "-2%", label: "vs last month" }}
               />
             </div>
             
@@ -122,7 +121,14 @@ const AdminDashboard = () => {
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                  <ProgressChart data={activityData} title="Platform Usage" />
+                  <ProgressChart 
+                    data={activityData.map(item => ({
+                      ...item,
+                      completed: item.completed.toString(),
+                      total: item.total.toString()
+                    }))} 
+                    title="Platform Usage" 
+                  />
                 </div>
                 
                 <Card>
@@ -356,5 +362,3 @@ const AdminDashboard = () => {
     </div>
   );
 };
-
-export default AdminDashboard;
