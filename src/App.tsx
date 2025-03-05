@@ -9,7 +9,7 @@ import { Toaster } from "./components/ui/toaster";
 import { Toaster as Sonner } from "./components/ui/sonner";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Dashboard from "./pages/Dashboard";
+import { Dashboard } from "./pages/Dashboard";
 import { Courses } from "./pages/Courses";
 import { CourseDetails } from "./pages/CourseDetails";
 import { Profile } from "./pages/Profile";
@@ -17,6 +17,7 @@ import { NotFound } from "./pages/NotFound";
 import { Labs } from "./pages/Labs";
 import { Achievements } from "./pages/Achievements";
 import { Settings } from "./pages/Settings";
+import { Leaderboard } from "./pages/Leaderboard";
 
 const queryClient = new QueryClient();
 
@@ -123,7 +124,7 @@ const App = () => {
                 <Route 
                   path="/student/dashboard" 
                   element={
-                    <ProtectedRoute isAdmin={false}>
+                    <ProtectedRoute>
                       <Dashboard />
                     </ProtectedRoute>
                   } 
@@ -131,39 +132,23 @@ const App = () => {
                 <Route 
                   path="/student/courses" 
                   element={
-                    <ProtectedRoute isAdmin={false}>
+                    <ProtectedRoute>
                       <Courses />
                     </ProtectedRoute>
                   } 
                 />
                 <Route 
-                  path="/student/courses/:phaseId" 
+                  path="/student/courses/:courseId" 
                   element={
-                    <ProtectedRoute isAdmin={false}>
-                      <Courses />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/student/courses/:phaseId/:courseId" 
-                  element={
-                    <ProtectedRoute isAdmin={false}>
+                    <ProtectedRoute>
                       <CourseDetails />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/student/profile" 
-                  element={
-                    <ProtectedRoute isAdmin={false}>
-                      <Profile />
                     </ProtectedRoute>
                   } 
                 />
                 <Route 
                   path="/student/labs" 
                   element={
-                    <ProtectedRoute isAdmin={false}>
+                    <ProtectedRoute>
                       <Labs />
                     </ProtectedRoute>
                   } 
@@ -171,15 +156,23 @@ const App = () => {
                 <Route 
                   path="/student/achievements" 
                   element={
-                    <ProtectedRoute isAdmin={false}>
+                    <ProtectedRoute>
                       <Achievements />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/student/leaderboard" 
+                  element={
+                    <ProtectedRoute>
+                      <Leaderboard />
                     </ProtectedRoute>
                   } 
                 />
                 <Route 
                   path="/student/settings" 
                   element={
-                    <ProtectedRoute isAdmin={false}>
+                    <ProtectedRoute>
                       <Settings />
                     </ProtectedRoute>
                   } 

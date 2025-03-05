@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
   Home, BookOpen, Award, User, Settings, ChevronLeft, Menu, 
-  Shield, Users, FileText, BarChart, Layers, Bell, GraduationCap, LogOut, X, FlaskConical
+  Shield, Users, FileText, BarChart, Layers, Bell, GraduationCap, LogOut, X, FlaskConical, Trophy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -98,6 +98,7 @@ export const AdminNavbar: React.FC = () => {
     { icon: Home, label: "الرئيسية", href: "/student/dashboard" },
     { icon: BookOpen, label: "الدورات", href: "/student/courses" },
     { icon: FlaskConical, label: "المختبرات", href: "/student/labs" },
+    { icon: Trophy, label: "لوحة المتصدرين", href: "/student/leaderboard" },
     { icon: Award, label: "الإنجازات", href: "/student/achievements" },
     { icon: Settings, label: "الإعدادات", href: "/student/settings" },
   ];
@@ -173,7 +174,7 @@ export const AdminNavbar: React.FC = () => {
           "text-xs text-muted-foreground font-medium mb-2 px-3 transition-all duration-300",
           !expanded && "opacity-0 absolute"
         )}>
-          Main Menu
+          {location.pathname.includes("/admin") ? "Main Menu" : "القائمة الرئيسية"}
         </p>
         <nav className="space-y-1">
           {navItems.map((item) => (

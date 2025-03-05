@@ -14,57 +14,16 @@ interface ProgressChartProps {
 export const ProgressChart: React.FC<ProgressChartProps> = ({ data, title }) => {
   const { isAdmin } = useSidebar();
   const maxValue = Math.max(...data.map(item => parseInt(item.total)));
-  const scale = 80 / maxValue; // 80 is our max height in the chart
-
+  
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-2">
         {title && <CardTitle className="text-lg font-medium">{title}</CardTitle>}
       </CardHeader>
       <CardContent>
-        <div className="relative h-[240px]">
-          <div className="absolute inset-0 flex items-end justify-around gap-6">
-            {data.map((item, i) => {
-              const completedHeight = parseInt(item.completed) * scale;
-              const totalHeight = parseInt(item.total) * scale;
-              
-              return (
-                <div key={i} className="relative flex-1">
-                  <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1">
-                    <div 
-                      className="w-8 bg-teal-500/20 rounded-t-lg"
-                      style={{ height: `${completedHeight}%` }}
-                    />
-                    <div 
-                      className="w-8 bg-slate-500/20 rounded-t-lg"
-                      style={{ height: `${totalHeight}%` }}
-                    />
-                  </div>
-                  <div className="absolute -bottom-6 inset-x-0 text-center">
-                    <p className="text-sm font-medium">{item.name}</p>
-                  </div>
-                  <div 
-                    className="absolute -top-6 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur-sm border rounded-lg px-2 py-1 text-xs"
-                    style={{ 
-                      opacity: 0,
-                      transition: '0.2s',
-                      pointerEvents: 'none'
-                    }}
-                  >
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-muted-foreground">
-                      {isAdmin ? "Completed" : "المكتمل"}: {item.completed}
-                    </p>
-                    <p className="text-muted-foreground">
-                      {isAdmin ? "Total" : "الإجمالي"}: {item.total}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          
-          <div className="absolute left-0 inset-y-6 flex flex-col justify-between">
+        <div className="h-[200px] flex items-end gap-6 mb-8 relative">
+          {/* Y-axis labels */}
+          <div className="absolute left-0 top-0 h-full flex flex-col justify-between py-2">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground w-6 text-right">
@@ -74,17 +33,60 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ data, title }) => 
               </div>
             ))}
           </div>
+
+          {/* Bars */}
+          <div className="flex-1 flex justify-around items-end h-full pt-2 pr-2">
+            {data.map((item, i) => {
+              const completed = parseInt(item.completed);
+              const total = parseInt(item.total);
+              const completedHeight = Math.max((completed / maxValue) * 180, 20);
+              const totalHeight = Math.max((total / maxValue) * 180, 20);
+              
+              return (
+                <div key={i} className="group flex flex-col items-center gap-2">
+                  {/* Tooltip */}
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute bottom-full mb-2 bg-background border rounded-lg px-3 py-2 text-sm whitespace-nowrap z-10">
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {isAdmin ? "Completed" : "المكتمل"}: {item.completed}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      {isAdmin ? "Total" : "الإجمالي"}: {item.total}
+                    </p>
+                  </div>
+
+                  {/* Bars */}
+                  <div className="flex gap-1 h-full items-end">
+                    <div 
+                      className="w-6 bg-gradient-to-t from-[#00C896] to-[#00B4D8] rounded-t transition-all duration-300 group-hover:opacity-80"
+                      style={{ height: `${completedHeight}px` }}
+                    />
+                    <div 
+                      className="w-6 bg-gradient-to-t from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-700 rounded-t transition-all duration-300 group-hover:opacity-80"
+                      style={{ height: `${totalHeight}px` }}
+                    />
+                  </div>
+                  
+                  {/* Label */}
+                  <span className="text-sm font-medium mt-2 text-center">
+                    {item.name}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
         
-        <div className="mt-8 flex items-center justify-center gap-4">
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-teal-500/20" />
+            <div className="w-3 h-3 rounded-sm bg-gradient-to-t from-[#00C896] to-[#00B4D8]" />
             <span className="text-sm text-muted-foreground">
               {isAdmin ? "Completed" : "المكتمل"}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-slate-500/20" />
+            <div className="w-3 h-3 rounded-sm bg-gradient-to-t from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-700" />
             <span className="text-sm text-muted-foreground">
               {isAdmin ? "Total Units" : "إجمالي الوحدات"}
             </span>

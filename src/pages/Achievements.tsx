@@ -45,7 +45,7 @@ interface Badge {
   acquired: number;
   achievedDate?: string;
   requiredProgress?: string;
-  points?: number;
+  points: number;
 }
 
 // Mock data for badges
@@ -59,6 +59,7 @@ const badges: Badge[] = [
     total: 1205,
     acquired: 1205,
     achievedDate: "2024-03-15",
+    points: 100
   },
   {
     id: 2,
@@ -69,6 +70,7 @@ const badges: Badge[] = [
     total: 856,
     acquired: 856,
     achievedDate: "2024-03-20",
+    points: 300
   },
   {
     id: 3,
@@ -79,6 +81,7 @@ const badges: Badge[] = [
     total: 432,
     acquired: 0,
     requiredProgress: "3/5 مختبرات",
+    points: 200
   },
   {
     id: 4,
@@ -89,6 +92,7 @@ const badges: Badge[] = [
     total: 245,
     acquired: 0,
     requiredProgress: "45% مكتمل",
+    points: 500
   },
   {
     id: 5,
@@ -99,6 +103,7 @@ const badges: Badge[] = [
     total: 123,
     acquired: 0,
     requiredProgress: "30% مكتمل",
+    points: 400
   },
   {
     id: 6,
@@ -109,6 +114,7 @@ const badges: Badge[] = [
     total: 98,
     acquired: 0,
     requiredProgress: "4/10 ثغرات",
+    points: 300
   },
   {
     id: 7,
@@ -119,6 +125,7 @@ const badges: Badge[] = [
     total: 342,
     acquired: 342,
     achievedDate: "2024-03-01",
+    points: 250
   },
   {
     id: 8,
@@ -129,6 +136,7 @@ const badges: Badge[] = [
     total: 156,
     acquired: 156,
     requiredProgress: "75% مكتمل",
+    points: 200
   },
   {
     id: 9,
@@ -139,6 +147,7 @@ const badges: Badge[] = [
     total: 445,
     acquired: 445,
     achievedDate: "2024-02-15",
+    points: 250
   },
   {
     id: 10,
@@ -149,6 +158,7 @@ const badges: Badge[] = [
     total: 89,
     acquired: 0,
     requiredProgress: "20% مكتمل",
+    points: 350
   },
   {
     id: 11,
@@ -159,6 +169,7 @@ const badges: Badge[] = [
     total: 234,
     acquired: 0,
     requiredProgress: "55% مكتمل",
+    points: 400
   },
   {
     id: 12,
@@ -169,6 +180,7 @@ const badges: Badge[] = [
     total: 67,
     acquired: 0,
     requiredProgress: "15% مكتمل",
+    points: 450
   }
 ];
 
@@ -194,6 +206,14 @@ const AchievementCard = ({ badge }: { badge: Badge }) => {
           </CardHeader>
           <CardContent className="text-center pb-6">
             <h3 className="font-semibold mb-1">{badge.title}</h3>
+            <div className="flex items-center justify-center gap-2">
+              <span className={cn(
+                "text-xs px-2 py-0.5 rounded-full",
+                isAchieved ? "bg-[#00C896]/10 text-[#00C896]" : "bg-muted text-muted-foreground"
+              )}>
+                {badge.points} نقطة
+              </span>
+            </div>
             {!isAchieved && (
               <Lock className="w-5 h-5 text-muted-foreground/50 absolute top-4 left-4" />
             )}
@@ -217,7 +237,7 @@ const AchievementCard = ({ badge }: { badge: Badge }) => {
                     description: badge.description,
                     icon: badge.icon,
                     date: badge.achievedDate || new Date().toISOString(),
-                    points: badge.points || 100,
+                    points: badge.points,
                   }}
                 />
               )}
@@ -229,9 +249,14 @@ const AchievementCard = ({ badge }: { badge: Badge }) => {
           <CardContent className="space-y-4">
             {isAchieved ? (
               <>
-                <div className="flex items-center gap-2 text-sm text-[#00C896]">
-                  <Award className="w-4 h-4" />
-                  <span>تم الحصول عليها في {new Date(badge.achievedDate).toLocaleDateString('ar-MA')}</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-[#00C896]">
+                    <Award className="w-4 h-4" />
+                    <span>تم الحصول عليها في {new Date(badge.achievedDate).toLocaleDateString('ar-MA')}</span>
+                  </div>
+                  <span className="text-sm bg-[#00C896]/10 text-[#00C896] px-2 py-0.5 rounded-full">
+                    {badge.points} نقطة
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Users className="w-4 h-4" />
@@ -242,9 +267,14 @@ const AchievementCard = ({ badge }: { badge: Badge }) => {
               <>
                 <div className="space-y-2">
                   <Progress value={badge.progress} className="h-2" />
-                  <p className="text-sm text-muted-foreground text-center">
-                    {badge.requiredProgress}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      {badge.requiredProgress}
+                    </p>
+                    <span className="text-sm bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+                      {badge.points} نقطة
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center">
                   <Users className="w-4 h-4" />

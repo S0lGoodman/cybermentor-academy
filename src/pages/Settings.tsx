@@ -32,7 +32,7 @@ const subscriptionData = {
   type: "شهري",
   status: "نشط",
   nextPayment: "2024-04-15",
-  amount: 299,
+  amount: 1500,
   paidMonths: ["2024-01", "2024-02", "2024-03"],
   dueMonths: ["2024-04"],
 };

@@ -37,7 +37,7 @@ export const Navbar: React.FC<NavbarProps> = ({ title }) => {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/70" />
             <Input
               type="search"
-              placeholder={isAdmin ? "Search courses, students, or modules..." : "Search courses and modules..."}
+              placeholder={isAdmin ? "Search courses, students, or modules..." : "البحث عن الدورات والوحدات..."}
               className="w-full rounded-full bg-background pl-8 focus-visible:ring-cyber-primary/30"
             />
           </div>

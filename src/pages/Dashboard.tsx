@@ -26,7 +26,7 @@ const progressData = [
   { name: "الدفاع عن الشبكات", completed: "8", total: "15" },
   { name: "القرصنة الأخلاقية", completed: "12", total: "25" },
   { name: "التحليل الجنائي", completed: "5", total: "18" },
-  { name: "التشفير", completed: "10", total: "12" },
+  { name: "التشفير", completed: "10", total: "12" }
 ];
 
 const pathSteps = [
@@ -34,7 +34,7 @@ const pathSteps = [
   { id: "2", title: "اجتياز أساسيات أمن الشبكات", completed: true },
   { id: "3", title: "إكمال وحدة أمن تطبيقات الويب", completed: false, current: true },
   { id: "4", title: "اجتياز التقييم العملي للقرصنة الأخلاقية", completed: false },
-  { id: "5", title: "إكمال شهادة عمليات الأمن", completed: false },
+  { id: "5", title: "إكمال شهادة عمليات الأمن", completed: false }
 ];
 
 const recommendedCourses = [
@@ -68,7 +68,7 @@ const recommendedCourses = [
   }
 ];
 
-const Dashboard = () => {
+export const Dashboard = () => {
   const { setExpanded, setIsAdmin, expanded } = useSidebar();
   
   useEffect(() => {
@@ -180,7 +180,7 @@ const Dashboard = () => {
               </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 min-h-[360px]">
                   <ProgressChart data={progressData} title="نشاطي" />
                 </div>
                 <PathTracker
@@ -195,7 +195,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold">دوراتي</h2>
                 <Button variant="ghost" size="sm" asChild className="hover:bg-[#00C896]/10 hover:text-[#00C896] transition-colors">
-                  <Link to="/courses">
+                  <Link to="/student/courses">
                     عرض جميع الدورات <ChevronLeft className="h-4 w-4 mr-1" />
                   </Link>
                 </Button>
@@ -231,22 +231,101 @@ const Dashboard = () => {
               <div className="lg:col-span-2">
                 <div className="bg-card p-6 rounded-xl border border-border/50 shadow-sm h-full hover:shadow-lg hover:border-border transition-all duration-300">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-foreground">النشاط الأخير</h2>
+                    <h2 className="text-lg font-semibold text-foreground">لوحة المتصدرين</h2>
+                    <Button variant="ghost" size="sm" asChild className="hover:bg-[#00C896]/10 hover:text-[#00C896] transition-colors">
+                      <Link to="/student/leaderboard">
+                        عرض الكل <ChevronLeft className="h-4 w-4 mr-1" />
+                      </Link>
+                    </Button>
                   </div>
                   <div className="space-y-4">
                     {[
-                      { icon: <BookCheck className="h-4 w-4 text-teal-500" />, text: "أكملت الوحدة 3: البرمجة النصية عبر المواقع", time: "قبل ساعتين" },
-                      { icon: <FileText className="h-4 w-4 text-teal-500" />, text: "بدأت الاختبار: أساسيات أمن الشبكات", time: "أمس" },
-                      { icon: <Zap className="h-4 w-4 text-teal-500" />, text: "حصلت على شارة: خبير حقن SQL", time: "قبل يومين" },
-                      { icon: <BarChart className="h-4 w-4 text-teal-500" />, text: "تم تحقيق هدف التقدم الأسبوعي", time: "قبل 3 أيام" },
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-start gap-3 pb-3 border-b border-border last:border-b-0 last:pb-0 hover:bg-muted/30 -mx-6 px-6 py-2 transition-all duration-300 cursor-pointer group">
-                        <div className="flex-shrink-0 bg-gradient-to-r from-teal-500/10 to-lime-500/10 dark:from-teal-500/20 dark:to-lime-500/20 rounded-full p-2 group-hover:from-teal-500/20 group-hover:to-lime-500/20 group-hover:scale-110 transition-all duration-300">
-                          {item.icon}
+                      { 
+                        name: "سارة محمد", 
+                        points: 2500, 
+                        rank: 1, 
+                        avatar: "https://i.pravatar.cc/150?img=1",
+                        badges: 8,
+                        level: "المستوى المتقدم",
+                        topBadges: [
+                          { id: 1, name: "خبير SQL", icon: "🛡️", rarity: "legendary" },
+                          { id: 2, name: "محلل شبكات", icon: "🌐", rarity: "epic" },
+                        ]
+                      },
+                      { 
+                        name: "أحمد خالد", 
+                        points: 2350, 
+                        rank: 2, 
+                        avatar: "https://i.pravatar.cc/150?img=2",
+                        badges: 7,
+                        level: "المستوى المتقدم",
+                        topBadges: [
+                          { id: 1, name: "مطور آمن", icon: "💻", rarity: "epic" },
+                          { id: 2, name: "محلل تشفير", icon: "🔐", rarity: "rare" },
+                        ]
+                      },
+                      { 
+                        name: "فاطمة علي", 
+                        points: 2200, 
+                        rank: 3, 
+                        avatar: "https://i.pravatar.cc/150?img=3",
+                        badges: 6,
+                        level: "المستوى المتوسط",
+                        topBadges: [
+                          { id: 1, name: "صائد الثغرات", icon: "🎯", rarity: "rare" },
+                          { id: 2, name: "حامي الشبكة", icon: "🛡️", rarity: "rare" },
+                        ]
+                      },
+                      { 
+                        name: "عمر حسن", 
+                        points: 2100, 
+                        rank: 4, 
+                        avatar: "https://i.pravatar.cc/150?img=4",
+                        badges: 5,
+                        level: "المستوى المتوسط",
+                        topBadges: [
+                          { id: 1, name: "محلل شبكات", icon: "🌐", rarity: "rare" },
+                          { id: 2, name: "مطور آمن", icon: "💻", rarity: "rare" },
+                        ]
+                      }
+                    ].map((student, i) => (
+                      <div key={i} className={cn(
+                        "flex items-center gap-4 p-3 rounded-lg transition-all duration-300",
+                        "hover:bg-muted/30 -mx-3 px-3",
+                        student.rank === 1 && "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20"
+                      )}>
+                        <div className="flex-shrink-0 w-8 text-lg font-semibold text-muted-foreground">
+                          #{student.rank}
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground group-hover:text-teal-500 transition-colors duration-300">{item.text}</p>
-                          <p className="text-xs text-muted-foreground group-hover:text-foreground/70 transition-colors duration-300">{item.time}</p>
+                        <Avatar className="h-10 w-10 border-2 border-teal-500/20">
+                          <AvatarImage src={student.avatar} />
+                          <AvatarFallback>{student.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-sm font-medium truncate">{student.name}</p>
+                            <p className="text-sm font-semibold text-teal-500">{student.points} نقطة</p>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Award className="h-3.5 w-3.5" />
+                              <span>{student.badges} شارات</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {student.level}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-2">
+                            {student.topBadges.map((badge) => (
+                              <div
+                                key={badge.id}
+                                className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/50"
+                              >
+                                <span className="text-sm">{badge.icon}</span>
+                                <span className="text-xs font-medium">{badge.name}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -260,5 +339,3 @@ const Dashboard = () => {
     </div>
   );
 };
-
-export default Dashboard;
