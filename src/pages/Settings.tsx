@@ -26,6 +26,7 @@ import {
   MessageCircle,
   ExternalLink,
 } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 // Mock data - replace with actual data from your backend
 const subscriptionData = {
@@ -64,6 +65,46 @@ export const Settings = () => {
                   <CardDescription>تحديث معلومات حسابك الشخصية</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Avatar Upload Section */}
+                  <div className="flex flex-col items-center space-y-4 pb-6">
+                    <div className="relative group">
+                      <Avatar className="w-24 h-24 border-2 border-[#00C896]/20 transition-all duration-300 group-hover:border-[#00C896]/50 group-hover:shadow-lg group-hover:shadow-[#00C896]/20">
+                        <AvatarImage src="https://github.com/shadcn.png" />
+                        <AvatarFallback>MA</AvatarFallback>
+                      </Avatar>
+                      <label 
+                        htmlFor="avatar-upload" 
+                        className="absolute inset-0 flex items-center justify-center bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      >
+                        تغيير الصورة
+                      </label>
+                      <input 
+                        type="file" 
+                        id="avatar-upload" 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            // Here you would typically upload the file to your server
+                            // For now, we'll just show a preview
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              const img = document.querySelector('.avatar-preview') as HTMLImageElement;
+                              if (img && event.target?.result) {
+                                img.src = event.target.result as string;
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      اختر صورة بحجم أقل من 2 ميجابايت
+                    </div>
+                  </div>
+                  <Separator />
                   <div className="space-y-2">
                     <Label>البريد الإلكتروني</Label>
                     <div className="flex gap-2">

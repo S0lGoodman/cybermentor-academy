@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSidebar } from './Sidebar';
+import { Separator } from "@/components/ui/separator";
 
 interface ProgressChartProps {
   data: Array<{
@@ -11,9 +12,70 @@ interface ProgressChartProps {
   title?: string;
 }
 
+const CircularProgress: React.FC<{
+  value: number;
+  label: string;
+  sublabel: string;
+}> = ({ value, label, sublabel }) => {
+  const radius = 45;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (value / 100) * circumference;
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-32 h-32">
+        {/* Background circle */}
+        <svg className="w-full h-full transform -rotate-90">
+          <circle
+            cx="64"
+            cy="64"
+            r={radius}
+            stroke="currentColor"
+            strokeWidth="8"
+            fill="transparent"
+            className="text-slate-800"
+          />
+          {/* Progress circle */}
+          <circle
+            cx="64"
+            cy="64"
+            r={radius}
+            stroke="url(#gradient)"
+            strokeWidth="8"
+            fill="transparent"
+            strokeLinecap="round"
+            style={{
+              strokeDasharray: circumference,
+              strokeDashoffset: strokeDashoffset,
+            }}
+            className="transition-all duration-500"
+          />
+          {/* Gradient definition */}
+          <defs>
+            <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#00B4D8" />
+              <stop offset="100%" stopColor="#00C896" />
+            </linearGradient>
+          </defs>
+        </svg>
+        {/* Percentage text */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-2xl font-bold text-foreground">{value}%</span>
+          <span className="text-xs text-muted-foreground">{sublabel}</span>
+        </div>
+      </div>
+      <h3 className="mt-4 text-sm font-medium text-center">{label}</h3>
+    </div>
+  );
+};
+
 export const ProgressChart: React.FC<ProgressChartProps> = ({ data, title }) => {
   const { isAdmin } = useSidebar();
-  const maxValue = Math.max(...data.map(item => parseInt(item.total)));
+
+  // Calculate overall progress
+  const totalModules = data.reduce((acc, item) => acc + parseInt(item.total), 0);
+  const completedModules = data.reduce((acc, item) => acc + parseInt(item.completed), 0);
+  const overallProgress = Math.round((completedModules / totalModules) * 100);
   
   return (
     <Card className="h-full">
@@ -21,64 +83,46 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({ data, title }) => 
         {title && <CardTitle className="text-lg font-medium">{title}</CardTitle>}
       </CardHeader>
       <CardContent>
-        <div className="h-[200px] flex items-end gap-6 mb-8 relative">
-          {/* Y-axis labels */}
-          <div className="absolute left-0 top-0 h-full flex flex-col justify-between py-2">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground w-6 text-right">
-                  {Math.round((maxValue / 4) * (4 - i))}
-                </span>
-                <div className="w-1 h-px bg-border" />
-              </div>
-            ))}
+        {/* Overall Progress */}
+        <div className="space-y-4 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-medium">التقدم الإجمالي في المسار</h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                {completedModules} من {totalModules} وحدة مكتملة
+              </p>
+            </div>
+            <span className="text-sm font-bold text-[#00C896]">{overallProgress}%</span>
           </div>
-
-          {/* Bars */}
-          <div className="flex-1 flex justify-around items-end h-full pt-2 pr-2">
-            {data.map((item, i) => {
-              const completed = parseInt(item.completed);
-              const total = parseInt(item.total);
-              const completedHeight = Math.max((completed / maxValue) * 180, 20);
-              const totalHeight = Math.max((total / maxValue) * 180, 20);
-              
-              return (
-                <div key={i} className="group flex flex-col items-center gap-2">
-                  {/* Tooltip */}
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute bottom-full mb-2 bg-background border rounded-lg px-3 py-2 text-sm whitespace-nowrap z-10">
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-muted-foreground text-xs">
-                      {isAdmin ? "Completed" : "المكتمل"}: {item.completed}
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      {isAdmin ? "Total" : "الإجمالي"}: {item.total}
-                    </p>
-                  </div>
-
-                  {/* Bars */}
-                  <div className="flex gap-1 h-full items-end">
-                    <div 
-                      className="w-6 bg-gradient-to-t from-[#00C896] to-[#00B4D8] rounded-t transition-all duration-300 group-hover:opacity-80"
-                      style={{ height: `${completedHeight}px` }}
-                    />
-                    <div 
-                      className="w-6 bg-gradient-to-t from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-700 rounded-t transition-all duration-300 group-hover:opacity-80"
-                      style={{ height: `${totalHeight}px` }}
-                    />
-                  </div>
-                  
-                  {/* Label */}
-                  <span className="text-sm font-medium mt-2 text-center">
-                    {item.name}
-                  </span>
-                </div>
-              );
-            })}
+          <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-[#00C896] to-[#00B4D8] transition-all duration-500"
+              style={{ width: `${overallProgress}%` }}
+            />
           </div>
         </div>
-        
+
+        <Separator className="my-8" />
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 py-4">
+          {data.map((item, index) => {
+            const completed = parseInt(item.completed);
+            const total = parseInt(item.total);
+            const percentage = Math.round((completed / total) * 100);
+            
+            return (
+              <CircularProgress
+                key={index}
+                value={percentage}
+                label={item.name}
+                sublabel={`${completed}/${total} وحدة`}
+              />
+            );
+          })}
+        </div>
+
         {/* Legend */}
-        <div className="flex items-center justify-center gap-6">
+        <div className="flex items-center justify-center gap-6 mt-8">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm bg-gradient-to-t from-[#00C896] to-[#00B4D8]" />
             <span className="text-sm text-muted-foreground">

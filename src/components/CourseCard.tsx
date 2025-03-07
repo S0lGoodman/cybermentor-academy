@@ -38,9 +38,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   phaseId,
   slug,
 }) => {
-  const courseUrl = slug 
-    ? `/student/courses/${phaseId}/${slug}` 
-    : `/student/courses/${phaseId}/${id}`;
+  const courseUrl = `/student/courses/${phaseId}/${slug || id}`;
 
   return (
     <Link to={locked ? "#" : courseUrl} className="block h-full">
@@ -62,7 +60,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           )}
         </div>
         
-        <CardContent className="flex-1 p-4 flex flex-col">
+        <CardContent className="flex-1 p-4">
           <h3 className="text-lg font-semibold mb-2 line-clamp-1 text-foreground">{title}</h3>
           <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{description}</p>
           

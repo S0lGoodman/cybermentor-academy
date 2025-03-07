@@ -138,7 +138,15 @@ const App = () => {
                   } 
                 />
                 <Route 
-                  path="/student/courses/:courseId" 
+                  path="/student/courses/:phaseId" 
+                  element={
+                    <ProtectedRoute>
+                      <Courses />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/student/courses/:phaseId/:courseSlug" 
                   element={
                     <ProtectedRoute>
                       <CourseDetails />
@@ -174,6 +182,14 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <Settings />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/student/profile" 
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
                     </ProtectedRoute>
                   } 
                 />

@@ -5,7 +5,7 @@ import { Navbar } from "../components/Navbar";
 import { CourseCard } from "../components/CourseCard";
 import { ProgressChart } from "../components/ProgressChart";
 import { StatCard } from "../components/StatCard";
-import { PathTracker } from "../components/PathTracker";
+import { SkillsRadar } from "../components/SkillsRadar";
 import { Button } from "../components/ui/button";
 import {
   BookOpen,
@@ -16,25 +16,27 @@ import {
   BarChart,
   BookCheck,
   Zap,
+  Trophy,
+  Medal,
 } from "lucide-react";
 import { useSidebar } from "../components/Sidebar";
 import { cn } from "../lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
 
 const progressData = [
-  { name: "أمن الويب", completed: "15", total: "20" },
-  { name: "الدفاع عن الشبكات", completed: "8", total: "15" },
-  { name: "القرصنة الأخلاقية", completed: "12", total: "25" },
-  { name: "التحليل الجنائي", completed: "5", total: "18" },
-  { name: "التشفير", completed: "10", total: "12" }
+  { name: "المستوى المبتدئ", completed: "8", total: "10" },
+  { name: "المستوى المتوسط", completed: "5", total: "12" },
+  { name: "المستوى المتقدم", completed: "2", total: "15" },
+  { name: "المستوى الخبير", completed: "0", total: "8" }
 ];
 
-const pathSteps = [
-  { id: "1", title: "إكمال مقدمة في الأمن السيبراني", completed: true },
-  { id: "2", title: "اجتياز أساسيات أمن الشبكات", completed: true },
-  { id: "3", title: "إكمال وحدة أمن تطبيقات الويب", completed: false, current: true },
-  { id: "4", title: "اجتياز التقييم العملي للقرصنة الأخلاقية", completed: false },
-  { id: "5", title: "إكمال شهادة عمليات الأمن", completed: false }
+const skillsData = [
+  { name: "أمن الشبكات", value: 85, color: "#00C896" },
+  { name: "أمن التطبيقات", value: 70, color: "#00C896" },
+  { name: "التشفير", value: 60, color: "#00C896" },
+  { name: "تحليل البرمجيات الخبيثة", value: 45, color: "#00C896" },
+  { name: "الاختراق الأخلاقي", value: 75, color: "#00C896" },
+  { name: "التحليل الجنائي", value: 55, color: "#00C896" }
 ];
 
 const recommendedCourses = [
@@ -67,6 +69,32 @@ const recommendedCourses = [
     duration: "6 أسابيع"
   }
 ];
+
+const getBadgeStyle = (rarity: string) => {
+  switch (rarity) {
+    case "legendary":
+      return "bg-amber-500/10 text-amber-500 border-amber-500/20";
+    case "epic":
+      return "bg-purple-500/10 text-purple-500 border-purple-500/20";
+    case "rare":
+      return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+    default:
+      return "bg-muted/50 text-muted-foreground border-border/50";
+  }
+};
+
+const getMedalIcon = (rank: number) => {
+  switch (rank) {
+    case 1:
+      return <Trophy className="h-4 w-4 text-amber-500" />;
+    case 2:
+      return <Medal className="h-4 w-4 text-gray-400" />;
+    case 3:
+      return <Medal className="h-4 w-4 text-amber-700" />;
+    default:
+      return null;
+  }
+};
 
 export const Dashboard = () => {
   const { setExpanded, setIsAdmin, expanded } = useSidebar();
@@ -147,25 +175,25 @@ export const Dashboard = () => {
               <StatCard
                 title="الدورات المسجلة"
                 value="7"
-                icon={<BookOpen className="h-5 w-5 text-teal-500" />}
+                icon={<BookOpen className="h-5 w-5" />}
                 trend={{ value: "+2", label: "هذا الشهر" }}
               />
               <StatCard
                 title="الدورات المكتملة"
                 value="3"
-                icon={<BookCheck className="h-5 w-5 text-teal-500" />}
+                icon={<BookCheck className="h-5 w-5" />}
                 trend={{ value: "+1", label: "هذا الشهر" }}
               />
               <StatCard
-                title="ساعات التعلم"
-                value="48"
-                icon={<Clock className="h-5 w-5 text-teal-500" />}
-                trend={{ value: "+12", label: "هذا الأسبوع" }}
+                title="الشارات المكتسبة"
+                value="4"
+                icon={<Award className="h-5 w-5" />}
+                trend={{ value: "+2", label: "هذا الشهر" }}
               />
               <StatCard
                 title="التقييمات المكتملة"
                 value="15"
-                icon={<FileText className="h-5 w-5 text-teal-500" />}
+                icon={<FileText className="h-5 w-5" />}
                 trend={{ value: "+5", label: "هذا الأسبوع" }}
               />
             </div>
@@ -173,19 +201,16 @@ export const Dashboard = () => {
             {/* Current Learning Path */}
             <div className="mb-8 animate-on-scroll">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold">مسار التعلم الحالي</h2>
-                <Button variant="outline" size="sm" className="text-teal-500 border-teal-500/30 hover:bg-teal-500/10">
-                  جميع المسارات <ChevronLeft className="h-4 w-4 mr-1" />
-                </Button>
+                <h2 className="text-xl font-semibold">تقدم المستويات</h2>
               </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 min-h-[360px]">
-                  <ProgressChart data={progressData} title="نشاطي" />
+                  <ProgressChart data={progressData} title="تقدمي في المستويات" />
                 </div>
-                <PathTracker
-                  title="خطواتي القادمة"
-                  steps={pathSteps}
+                <SkillsRadar
+                  title="مهاراتي"
+                  skills={skillsData}
                 />
               </div>
             </div>
@@ -209,7 +234,7 @@ export const Dashboard = () => {
             </div>
             
             {/* Recent Activity & My Mentor */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 animate-on-scroll">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8 animate-on-scroll">
               <div className="bg-card p-6 rounded-xl border border-border/50 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold text-foreground">المرشد الخاص بي</h2>
@@ -228,10 +253,13 @@ export const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-3">
                 <div className="bg-card p-6 rounded-xl border border-border/50 shadow-sm h-full hover:shadow-lg hover:border-border transition-all duration-300">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-foreground">لوحة المتصدرين</h2>
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="space-y-1.5">
+                      <h2 className="text-lg font-semibold text-foreground">لوحة المتصدرين</h2>
+                      <p className="text-sm text-muted-foreground">أفضل المتعلمين أداءً هذا الشهر</p>
+                    </div>
                     <Button variant="ghost" size="sm" asChild className="hover:bg-[#00C896]/10 hover:text-[#00C896] transition-colors">
                       <Link to="/student/leaderboard">
                         عرض الكل <ChevronLeft className="h-4 w-4 mr-1" />
@@ -247,6 +275,7 @@ export const Dashboard = () => {
                         avatar: "https://i.pravatar.cc/150?img=1",
                         badges: 8,
                         level: "المستوى المتقدم",
+                        pathProgress: 85,
                         topBadges: [
                           { id: 1, name: "خبير SQL", icon: "🛡️", rarity: "legendary" },
                           { id: 2, name: "محلل شبكات", icon: "🌐", rarity: "epic" },
@@ -259,6 +288,7 @@ export const Dashboard = () => {
                         avatar: "https://i.pravatar.cc/150?img=2",
                         badges: 7,
                         level: "المستوى المتقدم",
+                        pathProgress: 78,
                         topBadges: [
                           { id: 1, name: "مطور آمن", icon: "💻", rarity: "epic" },
                           { id: 2, name: "محلل تشفير", icon: "🔐", rarity: "rare" },
@@ -271,6 +301,7 @@ export const Dashboard = () => {
                         avatar: "https://i.pravatar.cc/150?img=3",
                         badges: 6,
                         level: "المستوى المتوسط",
+                        pathProgress: 65,
                         topBadges: [
                           { id: 1, name: "صائد الثغرات", icon: "🎯", rarity: "rare" },
                           { id: 2, name: "حامي الشبكة", icon: "🛡️", rarity: "rare" },
@@ -283,48 +314,92 @@ export const Dashboard = () => {
                         avatar: "https://i.pravatar.cc/150?img=4",
                         badges: 5,
                         level: "المستوى المتوسط",
+                        pathProgress: 55,
                         topBadges: [
                           { id: 1, name: "محلل شبكات", icon: "🌐", rarity: "rare" },
                           { id: 2, name: "مطور آمن", icon: "💻", rarity: "rare" },
                         ]
                       }
                     ].map((student, i) => (
-                      <div key={i} className={cn(
-                        "flex items-center gap-4 p-3 rounded-lg transition-all duration-300",
-                        "hover:bg-muted/30 -mx-3 px-3",
-                        student.rank === 1 && "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20"
-                      )}>
-                        <div className="flex-shrink-0 w-8 text-lg font-semibold text-muted-foreground">
-                          #{student.rank}
-                        </div>
-                        <Avatar className="h-10 w-10 border-2 border-teal-500/20">
-                          <AvatarImage src={student.avatar} />
-                          <AvatarFallback>{student.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-sm font-medium truncate">{student.name}</p>
-                            <p className="text-sm font-semibold text-teal-500">{student.points} نقطة</p>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Award className="h-3.5 w-3.5" />
-                              <span>{student.badges} شارات</span>
+                      <div
+                        key={i}
+                        className={cn(
+                          "relative flex items-center gap-6 p-5 rounded-lg transition-all duration-300",
+                          "hover:bg-muted/30 group",
+                          student.rank === 1 && "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20"
+                        )}
+                      >
+                        <div className="flex items-center gap-6 w-full">
+                          <div className="relative">
+                            <div className="absolute -top-1 -right-1 z-10">
+                              {getMedalIcon(student.rank)}
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              {student.level}
-                            </div>
+                            <Avatar className={cn(
+                              "h-14 w-14 border-2 transition-all duration-300",
+                              student.rank === 1 ? "border-amber-500 group-hover:border-amber-400" :
+                              student.rank === 2 ? "border-gray-400 group-hover:border-gray-300" :
+                              student.rank === 3 ? "border-amber-700 group-hover:border-amber-600" :
+                              "border-teal-500/20 group-hover:border-teal-500/40"
+                            )}>
+                              <AvatarImage src={student.avatar} />
+                              <AvatarFallback>{student.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                            </Avatar>
                           </div>
-                          <div className="flex gap-2 mt-2">
-                            {student.topBadges.map((badge) => (
-                              <div
-                                key={badge.id}
-                                className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/50"
-                              >
-                                <span className="text-sm">{badge.icon}</span>
-                                <span className="text-xs font-medium">{badge.name}</span>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-3">
+                                <span className="text-base font-medium">{student.name}</span>
+                                <div className="text-sm font-medium text-muted-foreground">
+                                  {student.level}
+                                </div>
                               </div>
-                            ))}
+                              <span className="text-base font-semibold text-teal-500">{student.points} نقطة</span>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                  <div className="flex items-center gap-1.5">
+                                    <Award className="h-4 w-4 text-teal-500" />
+                                    <span className="text-sm text-muted-foreground">{student.badges} شارات</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {student.topBadges.map((badge) => (
+                                      <div
+                                        key={badge.id}
+                                        className={cn(
+                                          "flex items-center gap-1.5 px-2.5 py-1 rounded-full border",
+                                          getBadgeStyle(badge.rarity)
+                                        )}
+                                      >
+                                        <span className="text-base">{badge.icon}</span>
+                                        <span className="text-sm font-medium">{badge.name}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-4">
+                                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                  <div
+                                    className={cn(
+                                      "h-full rounded-full transition-all duration-500",
+                                      student.rank === 1 ? "bg-gradient-to-r from-amber-500 to-yellow-500" :
+                                      student.rank === 2 ? "bg-gradient-to-r from-gray-400 to-gray-300" :
+                                      student.rank === 3 ? "bg-gradient-to-r from-amber-700 to-amber-600" :
+                                      "bg-teal-500"
+                                    )}
+                                    style={{ width: `${student.pathProgress}%` }}
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2 min-w-[120px]">
+                                  <span className="text-sm text-muted-foreground">تقدم المسار</span>
+                                  <span className="text-sm font-medium">{student.pathProgress}%</span>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>

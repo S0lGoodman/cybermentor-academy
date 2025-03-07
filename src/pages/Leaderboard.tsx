@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 // Mock data - In a real app, this would come from an API
 const allStudents = [
@@ -28,6 +29,7 @@ const allStudents = [
     badges: 8,
     level: "المستوى المتقدم",
     completedCourses: 12,
+    pathProgress: 85,
     topBadges: [
       { id: 1, name: "خبير SQL", icon: "🛡️", rarity: "legendary" },
       { id: 2, name: "محلل شبكات", icon: "🌐", rarity: "epic" },
@@ -42,6 +44,7 @@ const allStudents = [
     badges: 7,
     level: "المستوى المتقدم",
     completedCourses: 10,
+    pathProgress: 78,
     topBadges: [
       { id: 1, name: "مطور آمن", icon: "💻", rarity: "epic" },
       { id: 2, name: "محلل تشفير", icon: "🔐", rarity: "rare" },
@@ -56,6 +59,7 @@ const allStudents = [
     badges: 6,
     level: "المستوى المتوسط",
     completedCourses: 8,
+    pathProgress: 65,
     topBadges: [
       { id: 1, name: "صائد الثغرات", icon: "🎯", rarity: "rare" },
       { id: 2, name: "حامي الشبكة", icon: "🛡️", rarity: "rare" },
@@ -70,6 +74,7 @@ const allStudents = [
     badges: 5,
     level: "المستوى المتوسط",
     completedCourses: 7,
+    pathProgress: 55,
     topBadges: [
       { id: 1, name: "محلل شبكات", icon: "🌐", rarity: "rare" },
       { id: 2, name: "مطور آمن", icon: "💻", rarity: "rare" },
@@ -84,6 +89,7 @@ const allStudents = [
     badges: 4,
     level: "المستوى المتوسط",
     completedCourses: 6,
+    pathProgress: 45,
     topBadges: [
       { id: 1, name: "مبتدئ واعد", icon: "⭐", rarity: "common" },
       { id: 2, name: "متعلم نشط", icon: "📚", rarity: "common" },
@@ -98,6 +104,7 @@ const allStudents = [
     badges: 3,
     level: "المستوى المبتدئ",
     completedCourses: 5,
+    pathProgress: 35,
     topBadges: [
       { id: 1, name: "مستكشف", icon: "🔍", rarity: "common" },
       { id: 2, name: "متعاون", icon: "🤝", rarity: "common" },
@@ -112,6 +119,7 @@ const allStudents = [
     badges: 3,
     level: "المستوى المبتدئ",
     completedCourses: 4,
+    pathProgress: 25,
     topBadges: [
       { id: 1, name: "مبتدئ واعد", icon: "⭐", rarity: "common" },
       { id: 2, name: "متعلم نشط", icon: "📚", rarity: "common" },
@@ -126,6 +134,7 @@ const allStudents = [
     badges: 3,
     level: "المستوى المبتدئ",
     completedCourses: 4,
+    pathProgress: 15,
     topBadges: [
       { id: 1, name: "مستكشف", icon: "🔍", rarity: "common" },
       { id: 2, name: "متعاون", icon: "🤝", rarity: "common" },
@@ -140,6 +149,7 @@ const allStudents = [
     badges: 2,
     level: "المستوى المبتدئ",
     completedCourses: 3,
+    pathProgress: 5,
     topBadges: [
       { id: 1, name: "مبتدئ واعد", icon: "⭐", rarity: "common" },
       { id: 2, name: "متعلم نشط", icon: "📚", rarity: "common" },
@@ -154,6 +164,7 @@ const allStudents = [
     badges: 2,
     level: "المستوى المبتدئ",
     completedCourses: 3,
+    pathProgress: 0,
     topBadges: [
       { id: 1, name: "مستكشف", icon: "🔍", rarity: "common" },
       { id: 2, name: "متعاون", icon: "🤝", rarity: "common" },
@@ -168,6 +179,7 @@ const allStudents = [
     badges: 2,
     level: "المستوى المبتدئ",
     completedCourses: 2,
+    pathProgress: 0,
     topBadges: [
       { id: 1, name: "مبتدئ واعد", icon: "⭐", rarity: "common" },
       { id: 2, name: "متعلم نشط", icon: "📚", rarity: "common" },
@@ -182,6 +194,7 @@ const allStudents = [
     badges: 2,
     level: "المستوى المبتدئ",
     completedCourses: 2,
+    pathProgress: 0,
     topBadges: [
       { id: 1, name: "مستكشف", icon: "🔍", rarity: "common" },
       { id: 2, name: "متعاون", icon: "🤝", rarity: "common" },
@@ -257,13 +270,30 @@ export const Leaderboard = () => {
                     <Medal className="absolute -top-2 -right-2 h-6 w-6 text-gray-400" />
                   </div>
                   <h3 className="text-lg font-semibold mt-4 mb-2">{topThree[1].name}</h3>
-                  <p className="text-teal-500 font-semibold">{topThree[1].points} نقطة</p>
+                  <div className="space-y-3">
+                    <p className="text-teal-500 font-semibold">{topThree[1].points} نقطة</p>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">تقدم المسار</span>
+                        <span className="font-medium">{topThree[1].pathProgress}%</span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-gray-400 to-gray-300 rounded-full transition-all duration-500"
+                          style={{ width: `${topThree[1].pathProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
                   <p className="text-sm text-muted-foreground mt-2">{topThree[1].level}</p>
                   <div className="flex justify-center gap-2 mt-3">
                     {topThree[1].topBadges.map((badge) => (
                       <div
                         key={badge.id}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/50"
+                        className={cn(
+                          "flex items-center gap-1 px-2 py-0.5 rounded-full border",
+                          getBadgeColor(badge.rarity)
+                        )}
                       >
                         <span className="text-sm">{badge.icon}</span>
                         <span className="text-xs font-medium">{badge.name}</span>
@@ -294,13 +324,30 @@ export const Leaderboard = () => {
                     <Trophy className="absolute -top-2 -right-2 h-8 w-8 text-yellow-500" />
                   </div>
                   <h3 className="text-xl font-semibold mt-4 mb-2">{topThree[0].name}</h3>
-                  <p className="text-teal-500 font-semibold text-lg">{topThree[0].points} نقطة</p>
+                  <div className="space-y-3">
+                    <p className="text-teal-500 font-semibold text-lg">{topThree[0].points} نقطة</p>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">تقدم المسار</span>
+                        <span className="font-medium">{topThree[0].pathProgress}%</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full transition-all duration-500"
+                          style={{ width: `${topThree[0].pathProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
                   <p className="text-sm text-muted-foreground mt-2">{topThree[0].level}</p>
                   <div className="flex justify-center gap-2 mt-3">
                     {topThree[0].topBadges.map((badge) => (
                       <div
                         key={badge.id}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/50"
+                        className={cn(
+                          "flex items-center gap-1 px-2 py-0.5 rounded-full border",
+                          getBadgeColor(badge.rarity)
+                        )}
                       >
                         <span className="text-sm">{badge.icon}</span>
                         <span className="text-xs font-medium">{badge.name}</span>
@@ -330,13 +377,30 @@ export const Leaderboard = () => {
                     <Medal className="absolute -top-2 -right-2 h-6 w-6 text-amber-700" />
                   </div>
                   <h3 className="text-lg font-semibold mt-4 mb-2">{topThree[2].name}</h3>
-                  <p className="text-teal-500 font-semibold">{topThree[2].points} نقطة</p>
+                  <div className="space-y-3">
+                    <p className="text-teal-500 font-semibold">{topThree[2].points} نقطة</p>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">تقدم المسار</span>
+                        <span className="font-medium">{topThree[2].pathProgress}%</span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-amber-700 to-amber-600 rounded-full transition-all duration-500"
+                          style={{ width: `${topThree[2].pathProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
                   <p className="text-sm text-muted-foreground mt-2">{topThree[2].level}</p>
                   <div className="flex justify-center gap-2 mt-3">
                     {topThree[2].topBadges.map((badge) => (
                       <div
                         key={badge.id}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/50"
+                        className={cn(
+                          "flex items-center gap-1 px-2 py-0.5 rounded-full border",
+                          getBadgeColor(badge.rarity)
+                        )}
                       >
                         <span className="text-sm">{badge.icon}</span>
                         <span className="text-xs font-medium">{badge.name}</span>
@@ -383,31 +447,48 @@ export const Leaderboard = () => {
                           <p className="text-sm font-medium truncate">{student.name}</p>
                           <p className="text-sm font-semibold text-teal-500">{student.points} نقطة</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Award className="h-3.5 w-3.5" />
-                              <span>{student.badges} شارات</span>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Award className="h-3.5 w-3.5" />
+                                <span>{student.badges} شارات</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <BookOpen className="h-3.5 w-3.5" />
+                                <span>{student.completedCourses} دورات مكتملة</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <BookOpen className="h-3.5 w-3.5" />
-                              <span>{student.completedCourses} دورات مكتملة</span>
+                            <div className="text-xs text-muted-foreground">
+                              {student.level}
                             </div>
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {student.level}
-                          </div>
-                        </div>
-                        <div className="flex gap-2 mt-2">
-                          {student.topBadges.map((badge) => (
-                            <div
-                              key={badge.id}
-                              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/50"
-                            >
-                              <span className="text-sm">{badge.icon}</span>
-                              <span className="text-xs font-medium">{badge.name}</span>
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">تقدم المسار</span>
+                              <span className="font-medium">{student.pathProgress}%</span>
                             </div>
-                          ))}
+                            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-teal-500 rounded-full transition-all duration-500"
+                                style={{ width: `${student.pathProgress}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            {student.topBadges.map((badge) => (
+                              <div
+                                key={badge.id}
+                                className={cn(
+                                  "flex items-center gap-1 px-2 py-0.5 rounded-full border",
+                                  getBadgeColor(badge.rarity)
+                                )}
+                              >
+                                <span className="text-sm">{badge.icon}</span>
+                                <span className="text-xs font-medium">{badge.name}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>

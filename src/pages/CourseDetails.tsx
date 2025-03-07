@@ -30,6 +30,10 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { marked } from 'marked';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useSidebar } from "@/components/Sidebar";
+
+// Import course data
+import { learningPath, coursesData } from "@/data/courses";
 
 // Mock course data structure
 interface ContentItem {
@@ -170,13 +174,47 @@ const ContentTypeIcon = ({ type }: { type: string }) => {
 };
 
 export const CourseDetails = () => {
-  const { courseId, phaseId } = useParams();
-  const [currentItemId, setCurrentItemId] = useState("1-1");
+  const { expanded } = useSidebar();
+  const { phaseId, courseSlug } = useParams();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const videoRef = useRef<HTMLIFrameElement>(null);
+  const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [savedTime, setSavedTime] = useState(0);
-  const videoRef = useRef<HTMLIFrameElement>(null);
-  
+
+  // Find the current course using the slug
+  const currentCourse = coursesData.find(course => 
+    (course.slug === courseSlug || course.id === courseSlug) && course.phaseId === phaseId
+  );
+
+  // Find the current phase
+  const currentPhase = learningPath.find(phase => phase.id === phaseId);
+
+  // Get course sections from the current course
+  const courseSections = currentCourse?.content || [];
+
+  // Calculate total progress
+  const totalItems = courseSections.reduce((acc, section) => 
+    acc + section.items.length, 0
+  );
+  const completedItems = courseSections.reduce(
+    (acc, section) => acc + section.items.filter(item => item.completed).length,
+    0
+  );
+  const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+
+  // Find current content item
+  const currentItem = courseSections
+    .flatMap(section => section.items)
+    .find(item => item.id === currentItemId);
+
+  // Set initial content item if not set
+  useEffect(() => {
+    if (!currentItemId && courseSections.length > 0 && courseSections[0].items.length > 0) {
+      setCurrentItemId(courseSections[0].items[0].id);
+    }
+  }, [currentItemId, courseSections]);
+
   // Load saved progress when video changes
   useEffect(() => {
     if (currentItem?.type === 'video') {
@@ -221,19 +259,6 @@ export const CourseDetails = () => {
     }
     setShowResumePrompt(false);
   };
-
-  // Calculate total progress
-  const totalItems = courseSections.reduce((acc, section) => acc + section.items.length, 0);
-  const completedItems = courseSections.reduce(
-    (acc, section) => acc + section.items.filter(item => item.completed).length,
-    0
-  );
-  const progress = (completedItems / totalItems) * 100;
-
-  // Find current content item
-  const currentItem = courseSections
-    .flatMap(section => section.items)
-    .find(item => item.id === currentItemId);
 
   // Find current section
   const currentSection = courseSections.find(section =>
@@ -317,10 +342,10 @@ export const CourseDetails = () => {
               className="flex items-center gap-1 hover:text-foreground transition-colors"
             >
               <GraduationCap className="w-4 h-4" />
-              <span>المستوى الأول</span>
+              <span>{currentPhase?.phase}</span>
             </Link>
             <ChevronLeftIcon className="w-4 h-4 mx-1" />
-            <span className="text-foreground font-medium">{currentItem?.title}</span>
+            <span className="text-foreground font-medium">{currentCourse?.title}</span>
           </nav>
         </div>
 
@@ -369,7 +394,7 @@ export const CourseDetails = () => {
                     <iframe
                       ref={videoRef}
                       className="w-full h-full"
-                      src={`https://www.youtube.com/embed/dQw4w9WgXcQ?enablejsapi=1&origin=${window.location.origin}`}
+                      src={`https://www.youtube.com/embed/dQw4w9WgXcQ?enablejsapi=1&origin=${window.location.origin}&autoplay=1&rel=0&modestbranding=1&playsinline=1`}
                       title={currentItem.title}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen

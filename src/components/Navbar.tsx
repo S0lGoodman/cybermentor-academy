@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,13 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ title }) => {
   const { isAdmin } = useSidebar();
+  const navigate = useNavigate();
+
+  const handleSignOut = () => {
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("userRole");
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur-sm">
@@ -58,7 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({ title }) => {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 mt-1" align="end" forceMount>
+            <DropdownMenuContent align="end">
               <div className="flex items-center justify-start gap-2 p-2">
                 <div className="flex flex-col space-y-0.5">
                   <p className="text-sm font-medium">John Doe</p>
@@ -79,7 +86,7 @@ export const Navbar: React.FC<NavbarProps> = ({ title }) => {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
+              <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600 focus:text-red-600">
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign Out
               </DropdownMenuItem>
