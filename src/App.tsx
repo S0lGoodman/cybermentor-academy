@@ -11,6 +11,7 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Dashboard } from "./pages/Dashboard";
 import { Courses } from "./pages/Courses";
+import { AdminCourses } from "./pages/AdminCourses";
 import { CourseDetails } from "./pages/CourseDetails";
 import { Profile } from "./pages/Profile";
 import { NotFound } from "./pages/NotFound";
@@ -18,6 +19,7 @@ import { Labs } from "./pages/Labs";
 import { Achievements } from "./pages/Achievements";
 import { Settings } from "./pages/Settings";
 import { Leaderboard } from "./pages/Leaderboard";
+import { Students } from "./pages/Students";
 
 const queryClient = new QueryClient();
 
@@ -71,10 +73,18 @@ const App = () => {
                   } 
                 />
                 <Route 
+                  path="/admin/students" 
+                  element={
+                    <ProtectedRoute isAdmin>
+                      <Students />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
                   path="/admin/courses" 
                   element={
                     <ProtectedRoute isAdmin>
-                      <Courses />
+                      <AdminCourses />
                     </ProtectedRoute>
                   } 
                 />

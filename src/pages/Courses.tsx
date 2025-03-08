@@ -60,25 +60,41 @@ export const Courses = () => {
     ? learningPath.findIndex(phase => phase.id === phaseId)
     : 0;
 
+  // Check if previous level is completed
+  const isPreviousLevelCompleted = (currentIndex: number) => {
+    if (currentIndex === 0) return true; // First level is always unlocked
+    const previousPhase = learningPath[currentIndex - 1];
+    return previousPhase?.progress === 100;
+  };
+
   // Generate breadcrumb items for all levels
   const breadcrumbItems = [
     { label: "الرئيسية", href: "/student/dashboard" },
     { label: "الدورات", href: "/student/courses" },
-    ...learningPath.map((phase) => ({
-      label: phase.phase,
-      href: phase.locked ? undefined : `/student/courses/${phase.id}`,
-      locked: phase.locked,
-      current: phase.id === currentPhase?.id
-    }))
+    ...learningPath.map((phase, index) => {
+      const isLocked = !isPreviousLevelCompleted(index);
+      return {
+        label: phase.phase,
+        href: `/student/courses/${phase.id}`, // Allow navigation to all levels
+        locked: isLocked,
+        current: phase.id === currentPhase?.id
+      };
+    })
   ];
 
-  // Filter courses to show only current phase courses
+  // Get all courses for the current phase
   const currentPhaseCourses = coursesData.filter(course => 
     currentPhase?.courses.includes(course.id)
   );
 
+  // Calculate phase progress based on course progress
+  const phaseProgress = currentPhaseCourses.length > 0
+    ? Math.round(currentPhaseCourses.reduce((acc, course) => acc + course.progress, 0) / currentPhaseCourses.length)
+    : 0;
+
   // Get next phase if exists
   const nextPhase = learningPath[currentPhaseIndex + 1];
+  const isNextPhaseLocked = nextPhase && !isPreviousLevelCompleted(currentPhaseIndex + 1);
 
   return (
     <div className="min-h-screen flex" dir="rtl">
@@ -99,31 +115,20 @@ export const Courses = () => {
                     {index > 0 && (
                       <ChevronLeft className="h-4 w-4 text-muted-foreground shrink-0" />
                     )}
-                    {item.href && !item.locked ? (
-                      <Link
-                        to={item.href}
-                        className={cn(
-                          "px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors",
-                          item.current
-                            ? "bg-[#00C896] text-white"
-                            : "hover:bg-muted"
-                        )}
-                      >
-                        {item.label}
-                      </Link>
-                    ) : (
-                      <span
-                        className={cn(
-                          "px-3 py-1 rounded-lg text-sm whitespace-nowrap",
-                          item.locked
-                            ? "text-muted-foreground cursor-not-allowed flex items-center gap-1"
-                            : "text-foreground"
-                        )}
-                      >
-                        {item.label}
-                        {item.locked && <Lock className="h-3 w-3" />}
-                      </span>
-                    )}
+                    <Link
+                      to={item.href}
+                      className={cn(
+                        "px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors flex items-center gap-1",
+                        item.current
+                          ? "bg-[#00C896] text-white"
+                          : item.locked
+                          ? "text-muted-foreground hover:bg-muted/50"
+                          : "hover:bg-muted"
+                      )}
+                    >
+                      {item.label}
+                      {item.locked && <Lock className="h-3 w-3" />}
+                    </Link>
                   </React.Fragment>
                 ))}
               </div>
@@ -138,14 +143,14 @@ export const Courses = () => {
                     <p className="text-sm text-muted-foreground">{currentPhase?.description}</p>
                   </div>
                   <div className="text-left">
-                    <div className="text-2xl font-bold text-teal-500 mb-1">{currentPhase?.progress}%</div>
+                    <div className="text-2xl font-bold text-teal-500 mb-1">{phaseProgress}%</div>
                     <div className="text-sm text-muted-foreground">تقدم المستوى</div>
                   </div>
                 </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div className="h-2 bg-muted rounded-full overflow-hidden relative">
                   <div
-                    className="h-full bg-gradient-to-r from-teal-500 to-green-500 rounded-full transition-all duration-500"
-                    style={{ width: `${currentPhase?.progress || 0}%` }}
+                    className="absolute top-0 right-0 h-full bg-gradient-to-l from-green-500 to-teal-500 rounded-full transition-all duration-500"
+                    style={{ width: `${phaseProgress}%` }}
                   />
                 </div>
                 <div className="mt-4 flex flex-wrap gap-4">
@@ -186,20 +191,12 @@ export const Courses = () => {
               <Button 
                 variant="outline" 
                 className="gap-2 hover:bg-[#00C896] hover:text-white transition-colors mb-8" 
-                disabled={nextPhase.locked}
-                asChild={!nextPhase.locked}
+                asChild
               >
-                {!nextPhase.locked ? (
-                  <Link to={`/student/courses/${nextPhase.id}`}>
-                    المرحلة التالية
-                    <ChevronLeft className="w-4 h-4" />
-                  </Link>
-                ) : (
-                  <>
-                    المرحلة التالية
-                    <Lock className="w-4 h-4" />
-                  </>
-                )}
+                <Link to={`/student/courses/${nextPhase.id}`}>
+                  المرحلة التالية
+                  <ChevronLeft className="w-4 h-4" />
+                </Link>
               </Button>
             )}
 
@@ -212,11 +209,10 @@ export const Courses = () => {
                     title={course.title}
                     description={course.description}
                     image={course.image}
-                    progress={userProgress.courseProgress?.[course.id] || 0}
+                    progress={!isPreviousLevelCompleted(currentPhaseIndex) ? 0 : course.progress}
                     level={course.level}
                     duration={course.duration}
-                    locked={course.locked}
-                    certified={course.certified}
+                    locked={!isPreviousLevelCompleted(currentPhaseIndex)}
                     phaseId={currentPhase.id}
                     slug={course.slug}
                   />

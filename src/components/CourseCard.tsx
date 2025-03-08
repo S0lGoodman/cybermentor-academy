@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "../components/ui/card";
 import { Progress } from "../components/ui/progress";
-import { Lock, Clock, Award, ArrowLeft } from "lucide-react";
+import { Lock, Clock, ArrowLeft } from "lucide-react";
 import { cn } from "../lib/utils";
 
 interface CourseCardProps {
@@ -14,7 +14,6 @@ interface CourseCardProps {
   level: "Beginner" | "Intermediate" | "Advanced";
   duration: string;
   locked?: boolean;
-  certified?: boolean;
   phaseId?: string;
   slug?: string;
 }
@@ -34,7 +33,6 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   level,
   duration,
   locked = false,
-  certified = false,
   phaseId,
   slug,
 }) => {
@@ -58,26 +56,32 @@ export const CourseCard: React.FC<CourseCardProps> = ({
               <Lock className="w-10 h-10 text-foreground" />
             </div>
           )}
+
+          {/* Progress Overlay - Only shown for unlocked courses */}
+          {!locked && (
+            <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-[2px] p-2">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="font-medium text-foreground">{progress}% مكتمل</span>
+                <span className="text-muted-foreground">التقدم</span>
+              </div>
+              <div className="relative w-full h-1.5 bg-muted/30 rounded-full overflow-hidden">
+                <div
+                  className="absolute top-0 right-0 h-full bg-gradient-to-l from-green-500 to-teal-500 rounded-full transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
         
         <CardContent className="flex-1 p-4">
-          <h3 className="text-lg font-semibold mb-2 line-clamp-1 text-foreground">{title}</h3>
+          <h3 className="text-lg font-semibold line-clamp-1 text-foreground mb-2">{title}</h3>
           <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{description}</p>
           
-          <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <Clock className="w-4 h-4" /> 
             <span>{duration}</span>
           </div>
-          
-          {!locked && progress > 0 && (
-            <div className="mt-auto">
-              <div className="flex items-center justify-between text-xs mb-1 flex-row-reverse">
-                <span className="font-medium text-foreground">{progress}%</span>
-                <span className="text-muted-foreground">التقدم</span>
-              </div>
-              <Progress value={progress} className="h-1.5 bg-muted/30" dir="rtl" />
-            </div>
-          )}
         </CardContent>
         
         <CardFooter className="flex items-center gap-2 text-muted-foreground bg-muted/5 border-t p-4">

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
@@ -107,8 +107,6 @@ export const AdminNavbar: React.FC = () => {
     { icon: Home, label: "Dashboard", href: "/admin/dashboard" },
     { icon: Users, label: "Students", href: "/admin/students" },
     { icon: BookOpen, label: "Courses", href: "/admin/courses" },
-    { icon: Shield, label: "Security", href: "/admin/security" },
-    { icon: BarChart, label: "Analytics", href: "/admin/analytics" },
     { icon: Settings, label: "Settings", href: "/admin/settings" },
   ];
 
@@ -143,12 +141,12 @@ export const AdminNavbar: React.FC = () => {
         <div className={cn("flex items-center gap-2", expanded ? "" : "justify-center w-full")}>
           <img 
             src="/logo.png" 
-            alt="Cyber Mentor Academy"
+            alt="CyberMentor Academy"
             className={cn("object-contain", expanded ? "h-12 w-12" : "h-10 w-10")}
           />
           {expanded && (
             <span className="text-xl font-semibold text-foreground">
-              Cyber Mentor Academy
+              Cybermentor Academy
             </span>
           )}
         </div>
@@ -189,29 +187,28 @@ export const AdminNavbar: React.FC = () => {
         </nav>
       </div>
 
-      <div className="mt-auto p-4">
-        <div 
+      <div className="mt-auto p-4 space-y-2">
+        {/* Logout Button */}
+        <Button 
+          variant="ghost" 
+          size="sm" 
           className={cn(
-            "flex items-center gap-3 rounded-lg p-3 cursor-pointer hover:bg-gradient-to-r hover:from-teal-500/10 hover:to-lime-500/10 transition-colors",
-            !expanded && "flex-col"
+            "w-full text-red-500 hover:bg-red-500/10 hover:text-red-500",
+            !expanded && "px-2"
           )}
+          onClick={() => {
+            // Add logout logic here
+            window.location.href = "/login";
+          }}
         >
-          <Avatar className="h-10 w-10 border-2 border-teal-500/20">
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>JD</AvatarFallback>
-          </Avatar>
-          {expanded && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">John Doe</p>
-              <p className="text-xs text-muted-foreground truncate">john.doe@example.com</p>
-            </div>
-          )}
-          {expanded && (
-            <Button variant="outline" size="sm" className="text-teal-500 border-teal-500/30 hover:bg-teal-500/10" onClick={toggleAdmin}>
-              {location.pathname.includes("/admin") ? "Student" : "Admin"}
-            </Button>
-          )}
-        </div>
+          <LogOut size={20} className="min-w-[20px]" />
+          <span className={cn(
+            "mr-2",
+            expanded ? "opacity-100 visible" : "opacity-0 invisible w-0"
+          )}>
+            {location.pathname.includes("/admin") ? "Logout" : "تسجيل الخروج"}
+          </span>
+        </Button>
       </div>
     </aside>
   );

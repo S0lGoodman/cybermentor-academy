@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AdminNavbar } from "../components/Sidebar";
 import { Navbar } from "../components/Navbar";
@@ -22,6 +22,16 @@ import {
 import { useSidebar } from "../components/Sidebar";
 import { cn } from "../lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
+
+interface LastLearningContent {
+  courseId: string;
+  courseTitle: string;
+  courseImage: string;
+  lastUnit: string;
+  progress: number;
+  phaseId: string;
+  slug: string;
+}
 
 const progressData = [
   { name: "المستوى المبتدئ", completed: "8", total: "10" },
@@ -96,8 +106,20 @@ const getMedalIcon = (rank: number) => {
   }
 };
 
+// Mock last learning content
+const mockLastLearningContent = {
+  courseId: "1-1",
+  courseTitle: "أساسيات الشبكات",
+  courseImage: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=300&h=300",
+  lastUnit: "مقدمة عن الشبكات والبروتوكولات",
+  progress: 85,
+  phaseId: "level-1",
+  slug: "network-basics"
+};
+
 export const Dashboard = () => {
   const { setExpanded, setIsAdmin, expanded } = useSidebar();
+  const [lastLearningContent, setLastLearningContent] = useState<LastLearningContent | null>(null);
   
   useEffect(() => {
     setExpanded(false);
@@ -126,6 +148,18 @@ export const Dashboard = () => {
     };
   }, [setExpanded, setIsAdmin]);
 
+  useEffect(() => {
+    // Fetch last learning content from localStorage or use mock data
+    const lastContent = localStorage.getItem('lastLearningContent');
+    if (lastContent) {
+      setLastLearningContent(JSON.parse(lastContent));
+    } else {
+      // Use mock data if no saved content exists
+      setLastLearningContent(mockLastLearningContent);
+      localStorage.setItem('lastLearningContent', JSON.stringify(mockLastLearningContent));
+    }
+  }, []);
+
   return (
     <div className="min-h-screen flex" dir="rtl">
       <AdminNavbar />
@@ -151,23 +185,48 @@ export const Dashboard = () => {
             <div className="mb-8 animate-on-scroll">
               <div className="bg-card p-6 rounded-xl border border-border/50 shadow-sm">
                 <h2 className="text-xl font-semibold mb-4 text-foreground">متابعة التعلم</h2>
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0">
-                    <img 
-                      src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=200&h=200" 
-                      alt="Course thumbnail" 
-                      className="w-24 h-24 object-cover rounded-lg"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium mb-1 text-foreground">أمن تطبيقات الويب المتقدم</h3>
-                    <p className="text-sm text-muted-foreground mb-2">آخر نشاط: الوحدة 3 - حقن SQL</p>
-                    <div className="h-2 bg-muted rounded-full mb-2">
-                      <div className="h-2 bg-gradient-to-r from-sky-500 to-green-500 rounded-full" style={{ width: '25%' }} />
+                {lastLearningContent ? (
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0">
+                      <img 
+                        src={lastLearningContent.courseImage}
+                        alt="Course thumbnail" 
+                        className="w-24 h-24 object-cover rounded-lg"
+                      />
                     </div>
-                    <Button className="mt-2 bg-gradient-to-r from-sky-500 to-green-500 text-white hover:from-sky-600 hover:to-green-600">متابعة التعلم</Button>
+                    <div className="flex-1">
+                      <h3 className="font-medium mb-1 text-foreground">{lastLearningContent.courseTitle}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">آخر نشاط: {lastLearningContent.lastUnit}</p>
+                      <div className="h-2 bg-muted rounded-full mb-2 relative overflow-hidden">
+                        <div 
+                          className="absolute top-0 right-0 h-full bg-gradient-to-l from-green-500 to-teal-500 rounded-full transition-all duration-500"
+                          style={{ width: `${lastLearningContent.progress}%` }}
+                        />
+                      </div>
+                      <Button 
+                        asChild
+                        className="mt-2 bg-gradient-to-r from-teal-500 to-green-500 text-white hover:from-teal-600 hover:to-green-600"
+                      >
+                        <Link to={`/student/courses/${lastLearningContent.phaseId}/${lastLearningContent.slug || lastLearningContent.courseId}`}>
+                          متابعة التعلم
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">لم تبدأ أي دورة بعد</p>
+                    <Button 
+                      asChild
+                      className="mt-4 bg-gradient-to-r from-teal-500 to-green-500 text-white hover:from-teal-600 hover:to-green-600"
+                    >
+                      <Link to="/student/courses">
+                        استكشف الدورات
+                      </Link>
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -326,7 +385,7 @@ export const Dashboard = () => {
                         className={cn(
                           "relative flex items-center gap-6 p-5 rounded-lg transition-all duration-300",
                           "hover:bg-muted/30 group",
-                          student.rank === 1 && "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20"
+                          student.rank === 1 && "bg-gradient-to-r from-amber-500/5 to-yellow-500/5 dark:from-amber-500/10 dark:to-yellow-500/10 hover:from-amber-500/10 hover:to-yellow-500/10 dark:hover:from-amber-500/20 dark:hover:to-yellow-500/20"
                         )}
                       >
                         <div className="flex items-center gap-6 w-full">
@@ -336,9 +395,9 @@ export const Dashboard = () => {
                             </div>
                             <Avatar className={cn(
                               "h-14 w-14 border-2 transition-all duration-300",
-                              student.rank === 1 ? "border-amber-500 group-hover:border-amber-400" :
-                              student.rank === 2 ? "border-gray-400 group-hover:border-gray-300" :
-                              student.rank === 3 ? "border-amber-700 group-hover:border-amber-600" :
+                              student.rank === 1 ? "border-amber-500/50 group-hover:border-amber-500/70 dark:border-amber-500/70 dark:group-hover:border-amber-500" :
+                              student.rank === 2 ? "border-gray-400/50 group-hover:border-gray-400/70 dark:border-gray-400/70 dark:group-hover:border-gray-400" :
+                              student.rank === 3 ? "border-amber-700/50 group-hover:border-amber-700/70 dark:border-amber-700/70 dark:group-hover:border-amber-700" :
                               "border-teal-500/20 group-hover:border-teal-500/40"
                             )}>
                               <AvatarImage src={student.avatar} />
@@ -386,9 +445,9 @@ export const Dashboard = () => {
                                   <div
                                     className={cn(
                                       "h-full rounded-full transition-all duration-500",
-                                      student.rank === 1 ? "bg-gradient-to-r from-amber-500 to-yellow-500" :
-                                      student.rank === 2 ? "bg-gradient-to-r from-gray-400 to-gray-300" :
-                                      student.rank === 3 ? "bg-gradient-to-r from-amber-700 to-amber-600" :
+                                      student.rank === 1 ? "bg-gradient-to-r from-amber-500 to-yellow-500 dark:from-amber-400 dark:to-yellow-400" :
+                                      student.rank === 2 ? "bg-gradient-to-r from-gray-400 to-gray-300 dark:from-gray-300 dark:to-gray-200" :
+                                      student.rank === 3 ? "bg-gradient-to-r from-amber-700 to-amber-600 dark:from-amber-600 dark:to-amber-500" :
                                       "bg-teal-500"
                                     )}
                                     style={{ width: `${student.pathProgress}%` }}

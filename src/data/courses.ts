@@ -11,7 +11,7 @@ export const learningPath = [
     courses: ["1-1", "1-2", "1-3"],
     description: "تعلم أساسيات الشبكات، نظام لينكس، والمفاهيم الأساسية للأمن المعلوماتي",
     locked: false,
-    progress: 0,
+    progress: 65,
     learningOutcomes: [
       "فهم المفاهيم الأساسية للشبكات وبروتوكولات الاتصال",
       "التعرف على أساسيات نظام التشغيل Linux وأوامره الرئيسية",
@@ -93,7 +93,7 @@ export const coursesData = [
     duration: "3 أسابيع",
     level: "Beginner" as const,
     enrolledStudents: 245,
-    progress: 0,
+    progress: 85,
     image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=300&h=300",
     certified: true,
     phaseId: "level-1",
@@ -135,7 +135,7 @@ export const coursesData = [
             title: "نموذج OSI",
             duration: "15min",
             type: "text",
-            completed: false,
+            completed: true,
             locked: false,
             description: "فهم طبقات نموذج OSI وكيفية تفاعلها"
           },
@@ -144,7 +144,7 @@ export const coursesData = [
             title: "[LAB] تحليل حزم البيانات",
             duration: "30min",
             type: "lab",
-            completed: false,
+            completed: true,
             locked: false,
             description: "تطبيق عملي على تحليل حزم البيانات باستخدام Wireshark"
           }
@@ -159,8 +159,8 @@ export const coursesData = [
             title: "مقدمة في TCP/IP",
             duration: "12min",
             type: "video",
-            completed: false,
-            locked: true,
+            completed: true,
+            locked: false,
             description: "فهم أساسيات بروتوكول TCP/IP وكيفية عمله"
           },
           {
@@ -169,7 +169,7 @@ export const coursesData = [
             duration: "20min",
             type: "text",
             completed: false,
-            locked: true,
+            locked: false,
             description: "تعلم كيفية تحليل المنافذ المفتوحة والخدمات المشغلة"
           }
         ]
@@ -184,10 +184,36 @@ export const coursesData = [
     duration: "4 أسابيع",
     level: "Beginner" as const,
     enrolledStudents: 230,
-    progress: 0,
+    progress: 60,
     image: "https://images.unsplash.com/photo-1629654297299-c8506221ca97?auto=format&fit=crop&w=300&h=300",
     certified: true,
-    phaseId: "level-1"
+    phaseId: "level-1",
+    content: [
+      {
+        id: "section-1",
+        title: "مقدمة في نظام لينكس",
+        items: [
+          {
+            id: "1-2-1",
+            title: "مقدمة عن نظام لينكس وتاريخه",
+            duration: "15min",
+            type: "video",
+            completed: true,
+            locked: false,
+            description: "تعرف على تاريخ نظام لينكس وأهميته في مجال الأمن السيبراني"
+          },
+          {
+            id: "1-2-2",
+            title: "تثبيت نظام لينكس",
+            duration: "30min",
+            type: "lab",
+            completed: false,
+            locked: false,
+            description: "خطوات تثبيت نظام لينكس وإعداده للاستخدام"
+          }
+        ]
+      }
+    ]
   },
   {
     id: "1-3",
@@ -197,9 +223,264 @@ export const coursesData = [
     duration: "3 أسابيع",
     level: "Beginner" as const,
     enrolledStudents: 210,
-    progress: 0,
+    progress: 50,
     image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=300&h=300",
     certified: true,
-    phaseId: "level-1"
+    phaseId: "level-1",
+    content: [
+      {
+        id: "section-1",
+        title: "أساسيات الأمن السيبراني",
+        items: [
+          {
+            id: "1-3-1",
+            title: "مقدمة في الأمن السيبراني",
+            duration: "20min",
+            type: "video",
+            completed: true,
+            locked: false,
+            description: "تعرف على المفاهيم الأساسية للأمن السيبراني"
+          }
+        ]
+      }
+    ]
+  },
+
+  // Level 2: Intermediate
+  {
+    id: "2-1",
+    slug: "web-application-security",
+    title: "أمن تطبيقات الويب",
+    description: "تعلم كيفية اختبار واكتشاف الثغرات في تطبيقات الويب",
+    duration: "4 أسابيع",
+    level: "Intermediate" as const,
+    enrolledStudents: 180,
+    progress: 0,
+    image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=300&h=300",
+    certified: true,
+    phaseId: "level-2",
+    content: [
+      {
+        id: "section-1",
+        title: "مقدمة في أمن تطبيقات الويب",
+        items: [
+          {
+            id: "2-1-1",
+            title: "مفاهيم أساسية في أمن تطبيقات الويب",
+            duration: "25min",
+            type: "video",
+            completed: false,
+            locked: false,
+            description: "تعرف على المفاهيم الأساسية في أمن تطبيقات الويب",
+            writtenContent: `
+# مقدمة في أمن تطبيقات الويب
+
+## المفاهيم الأساسية
+- ما هي تطبيقات الويب
+- التهديدات الشائعة
+- OWASP Top 10
+
+## أدوات الاختبار
+- Burp Suite
+- OWASP ZAP
+- Browser Developer Tools
+
+## منهجية الاختبار
+- Black Box Testing
+- White Box Testing
+- Gray Box Testing
+`
+          },
+          {
+            id: "2-1-2",
+            title: "اكتشاف الثغرات الشائعة",
+            duration: "45min",
+            type: "lab",
+            completed: false,
+            locked: false,
+            description: "تطبيق عملي على اكتشاف الثغرات الشائعة في تطبيقات الويب"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: "2-2",
+    slug: "network-pentesting",
+    title: "اختبار اختراق الشبكات",
+    description: "تعلم منهجيات وأدوات اختبار اختراق الشبكات",
+    duration: "5 أسابيع",
+    level: "Intermediate" as const,
+    enrolledStudents: 165,
+    progress: 0,
+    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=300&h=300",
+    certified: true,
+    phaseId: "level-2",
+    content: [
+      {
+        id: "section-1",
+        title: "أساسيات اختبار الاختراق",
+        items: [
+          {
+            id: "2-2-1",
+            title: "مقدمة في اختبار الاختراق",
+            duration: "30min",
+            type: "video",
+            completed: false,
+            locked: false,
+            description: "تعرف على مفاهيم وأساسيات اختبار الاختراق"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: "2-3",
+    slug: "wireless-security",
+    title: "أمن الشبكات اللاسلكية",
+    description: "تعلم كيفية اختبار وتأمين الشبكات اللاسلكية",
+    duration: "3 أسابيع",
+    level: "Intermediate" as const,
+    enrolledStudents: 150,
+    progress: 0,
+    image: "https://images.unsplash.com/photo-1562813733-b31f71025d54?auto=format&fit=crop&w=300&h=300",
+    certified: true,
+    phaseId: "level-2",
+    content: [
+      {
+        id: "section-1",
+        title: "أساسيات الشبكات اللاسلكية",
+        items: [
+          {
+            id: "2-3-1",
+            title: "مقدمة في أمن الشبكات اللاسلكية",
+            duration: "20min",
+            type: "video",
+            completed: false,
+            locked: false,
+            description: "تعرف على أساسيات أمن الشبكات اللاسلكية"
+          }
+        ]
+      }
+    ]
+  },
+
+  // Level 3: Advanced
+  {
+    id: "3-1",
+    slug: "malware-analysis",
+    title: "تحليل البرمجيات الخبيثة",
+    description: "تعلم تقنيات تحليل وتفكيك البرمجيات الخبيثة",
+    duration: "6 أسابيع",
+    level: "Advanced" as const,
+    enrolledStudents: 120,
+    progress: 0,
+    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=300&h=300",
+    certified: true,
+    phaseId: "level-3",
+    content: [
+      {
+        id: "section-1",
+        title: "مقدمة في تحليل البرمجيات الخبيثة",
+        items: [
+          {
+            id: "3-1-1",
+            title: "أساسيات تحليل البرمجيات الخبيثة",
+            duration: "35min",
+            type: "video",
+            completed: false,
+            locked: false,
+            description: "تعرف على المفاهيم الأساسية في تحليل البرمجيات الخبيثة",
+            writtenContent: `
+# مقدمة في تحليل البرمجيات الخبيثة
+
+## المفاهيم الأساسية
+- أنواع البرمجيات الخبيثة
+- بيئة التحليل الآمنة
+- أدوات التحليل
+
+## منهجيات التحليل
+- التحليل الثابت
+- التحليل الديناميكي
+- الهندسة العكسية
+
+## أدوات التحليل
+- IDA Pro
+- Ghidra
+- x64dbg
+`
+          },
+          {
+            id: "3-1-2",
+            title: "إعداد بيئة التحليل",
+            duration: "45min",
+            type: "lab",
+            completed: false,
+            locked: false,
+            description: "تطبيق عملي على إعداد بيئة تحليل آمنة"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: "3-2",
+    slug: "exploit-development",
+    title: "تطوير الثغرات",
+    description: "تعلم كيفية اكتشاف وتطوير واستغلال الثغرات البرمجية",
+    duration: "8 أسابيع",
+    level: "Advanced" as const,
+    enrolledStudents: 95,
+    progress: 0,
+    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=300&h=300",
+    certified: true,
+    phaseId: "level-3",
+    content: [
+      {
+        id: "section-1",
+        title: "أساسيات تطوير الثغرات",
+        items: [
+          {
+            id: "3-2-1",
+            title: "مقدمة في تطوير الثغرات",
+            duration: "40min",
+            type: "video",
+            completed: false,
+            locked: false,
+            description: "تعرف على المفاهيم الأساسية في تطوير واستغلال الثغرات"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: "3-3",
+    slug: "advanced-web-exploitation",
+    title: "استغلال تطبيقات الويب المتقدم",
+    description: "تعلم تقنيات متقدمة في استغلال ثغرات تطبيقات الويب",
+    duration: "6 أسابيع",
+    level: "Advanced" as const,
+    enrolledStudents: 85,
+    progress: 0,
+    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=300&h=300",
+    certified: true,
+    phaseId: "level-3",
+    content: [
+      {
+        id: "section-1",
+        title: "الثغرات المتقدمة",
+        items: [
+          {
+            id: "3-3-1",
+            title: "مقدمة في الثغرات المتقدمة",
+            duration: "35min",
+            type: "video",
+            completed: false,
+            locked: false,
+            description: "تعرف على الثغرات المتقدمة في تطبيقات الويب"
+          }
+        ]
+      }
+    ]
   }
 ]; 

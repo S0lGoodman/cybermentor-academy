@@ -215,6 +215,22 @@ export const CourseDetails = () => {
     }
   }, [currentItemId, courseSections]);
 
+  // Save last accessed content
+  useEffect(() => {
+    if (currentItem && currentCourse) {
+      const lastContent = {
+        courseId: currentCourse.id,
+        courseTitle: currentCourse.title,
+        courseImage: currentCourse.image,
+        lastUnit: currentItem.title,
+        progress: currentCourse.progress,
+        phaseId: currentCourse.phaseId,
+        slug: currentCourse.slug
+      };
+      localStorage.setItem('lastLearningContent', JSON.stringify(lastContent));
+    }
+  }, [currentItem, currentCourse]);
+
   // Load saved progress when video changes
   useEffect(() => {
     if (currentItem?.type === 'video') {
