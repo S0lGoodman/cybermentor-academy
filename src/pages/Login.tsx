@@ -7,30 +7,48 @@ import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle } from "lucide-react";
 import { useSidebar } from "../components/Sidebar";
+import { useAuth } from "../contexts/AuthContext";
+import { Alert, AlertDescription } from "../components/ui/alert";
+import { supabase } from "../lib/supabase";
 
 export const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { setIsAdmin } = useSidebar();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const { signIn } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setIsLoading(true);
     
-    // For testing purposes, check email to determine role
-    if (email === "admin@test.com") {
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("userRole", "admin");
-      setIsAdmin(true);
-      navigate("/admin/dashboard");
-    } else if (email === "student@test.com") {
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("userRole", "student");
-      setIsAdmin(false);
-      navigate("/student/dashboard");
+    try {
+      await signIn(email, password);
+      
+      // After successful login, check user role and redirect accordingly
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile?.role === 'admin') {
+          setIsAdmin(true);
+          navigate("/admin/dashboard");
+        } else {
+          setIsAdmin(false);
+          navigate("/student/dashboard");
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred during login');
+      setIsLoading(false);
     }
   };
 
@@ -132,6 +150,11 @@ export const Login = () => {
                     disabled={isLoading}
                   />
                 </motion.div>
+                {error && (
+                  <Alert variant="destructive" className="bg-red-500/10 border-red-500/20">
+                    <AlertDescription className="text-red-500">{error}</AlertDescription>
+                  </Alert>
+                )}
                 <motion.div
                   animate={isLoading ? { 
                     opacity: 0,
