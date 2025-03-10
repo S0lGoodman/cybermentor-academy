@@ -21,8 +21,9 @@ import { Achievements } from "./pages/Achievements";
 import { Settings } from "./pages/Settings";
 import { AdminSettings } from "./pages/AdminSettings";
 import { Leaderboard } from "./pages/Leaderboard";
-import { Students } from "./pages/Students";
+import Students from "./pages/Students";
 import { api, trpcClient } from "./utils/api";
+import { ResetPassword } from "@/pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -217,6 +218,9 @@ const App = () => {
                         </ProtectedRoute>
                       } 
                     />
+
+                    {/* Reset Password Route */}
+                    <Route path="/reset-password" element={<ResetPassword />} />
 
                     {/* 404 Route */}
                     <Route path="*" element={<Navigate to="/login" />} />
