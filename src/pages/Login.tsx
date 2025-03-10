@@ -38,6 +38,10 @@ export const Login = () => {
           .eq('id', user.id)
           .single();
         
+        // Set localStorage values
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('userRole', profile?.role || 'student');
+        
         if (profile?.role === 'admin') {
           setIsAdmin(true);
           navigate("/admin/dashboard");
@@ -179,9 +183,9 @@ export const Login = () => {
           
           <div className="mt-4 text-center text-sm text-muted-foreground">
             <p>Test Accounts:</p>
-            <p>Student: student@test.com</p>
-            <p>Admin: admin@test.com</p>
-            <p>(Any password will work)</p>
+            <p>Student: student@cybermentor.com</p>
+            <p>Admin: admin@cybermentor.com</p>
+            <p>Password: 111111</p>
           </div>
         </CardContent>
       </Card>
