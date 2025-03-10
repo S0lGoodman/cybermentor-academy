@@ -42,6 +42,10 @@ export const Login = () => {
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('userRole', profile?.role || 'student');
         
+        // Set success state and delay navigation for animation
+        setIsSuccess(true);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
         if (profile?.role === 'admin') {
           setIsAdmin(true);
           navigate("/admin/dashboard");
@@ -58,15 +62,32 @@ export const Login = () => {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-sky-500/20 via-background to-teal-500/20" />
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="absolute inset-0 bg-gradient-to-br from-sky-500/20 via-background to-teal-500/20" 
+      />
       
       <Card className="w-full max-w-md mx-4 relative backdrop-blur-xl bg-white/10 dark:bg-black/10 border-white/20 dark:border-white/10 shadow-lg ring-1 ring-black/5 dark:ring-white/10 overflow-hidden z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/30 dark:from-white/10 to-transparent opacity-50 rounded-lg" />
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.5 }}
+          className="absolute inset-0 bg-gradient-to-br from-white/30 dark:from-white/10 to-transparent rounded-lg" 
+        />
         <CardHeader className="space-y-4 text-center relative">
           <motion.div 
             className="flex justify-center"
-            animate={isLoading ? { scale: isSuccess ? 1.1 : 0.8 } : { scale: 1 }}
-            transition={{ duration: 0.5 }}
+            animate={
+              isSuccess 
+                ? { scale: [1, 1.2, 1], rotate: [0, 360, 360] }
+                : isLoading 
+                  ? { scale: 0.8 }
+                  : { scale: 1 }
+            }
+            transition={{ 
+              duration: isSuccess ? 1.5 : 0.5,
+              ease: isSuccess ? "easeInOut" : "easeOut"
+            }}
           >
             <img 
               src="/logo.png" 
@@ -78,8 +99,9 @@ export const Login = () => {
             {!isSuccess && (
               <motion.div 
                 className="space-y-2"
+                initial={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.3 }}
               >
                 <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
                   سايبر مينتور اكاديمي
@@ -96,15 +118,25 @@ export const Login = () => {
                 className="flex flex-col items-center space-y-2"
               >
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ 
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 15
+                  }}
                 >
                   <CheckCircle className="w-12 h-12 text-green-500" />
                 </motion.div>
-                <CardTitle className="text-xl font-medium text-foreground">
-                  تم تسجيل الدخول بنجاح
-                </CardTitle>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <CardTitle className="text-xl font-medium text-foreground">
+                    تم تسجيل الدخول بنجاح
+                  </CardTitle>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -115,16 +147,20 @@ export const Login = () => {
               <motion.form 
                 onSubmit={handleLogin} 
                 className="space-y-4"
+                initial={{ opacity: 1 }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
               >
                 <motion.div 
                   className="space-y-2"
                   animate={isLoading ? { 
-                    opacity: 0,
-                    y: -20,
+                    opacity: 0.5,
+                    y: -10,
                     transition: { duration: 0.2 }
-                  } : {}}
+                  } : {
+                    opacity: 1,
+                    y: 0
+                  }}
                 >
                   <Input
                     type="email"
@@ -139,10 +175,13 @@ export const Login = () => {
                 <motion.div 
                   className="space-y-2"
                   animate={isLoading ? { 
-                    opacity: 0,
-                    y: -20,
+                    opacity: 0.5,
+                    y: -10,
                     transition: { duration: 0.2, delay: 0.1 }
-                  } : {}}
+                  } : {
+                    opacity: 1,
+                    y: 0
+                  }}
                 >
                   <Input
                     type="password"
@@ -155,16 +194,23 @@ export const Login = () => {
                   />
                 </motion.div>
                 {error && (
-                  <Alert variant="destructive" className="bg-red-500/10 border-red-500/20">
-                    <AlertDescription className="text-red-500">{error}</AlertDescription>
-                  </Alert>
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <Alert variant="destructive" className="bg-red-500/10 border-red-500/20">
+                      <AlertDescription className="text-red-500">{error}</AlertDescription>
+                    </Alert>
+                  </motion.div>
                 )}
                 <motion.div
                   animate={isLoading ? { 
-                    opacity: 0,
-                    y: -20,
-                    transition: { duration: 0.2, delay: 0.2 }
-                  } : {}}
+                    scale: 0.95,
+                    transition: { duration: 0.2 }
+                  } : {
+                    scale: 1
+                  }}
                 >
                   <Button
                     type="submit"
@@ -180,13 +226,6 @@ export const Login = () => {
               </motion.form>
             )}
           </AnimatePresence>
-          
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            <p>Test Accounts:</p>
-            <p>Student: student@cybermentor.com</p>
-            <p>Admin: admin@cybermentor.com</p>
-            <p>Password: 111111</p>
-          </div>
         </CardContent>
       </Card>
     </div>

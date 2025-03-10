@@ -26,8 +26,11 @@ export const useSidebar = () => {
 };
 
 export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [expanded, setExpanded] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(() => {
+    const userRole = localStorage.getItem('userRole');
+    return userRole === 'admin';
+  });
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <SidebarContext.Provider value={{ expanded, setExpanded, isAdmin, setIsAdmin }}>
@@ -55,7 +58,8 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href, active, onCl
     <Link
       to={href}
       className={cn(
-        "flex items-center gap-4 px-3 py-2 rounded-lg transition-all duration-300 group relative",
+        "flex items-center gap-4 transition-all duration-300 group relative",
+        expanded ? "px-3 py-2" : "p-3 justify-center",
         isActive 
           ? "bg-gradient-to-r from-teal-500/20 to-lime-500/20 text-teal-500 font-medium dark:from-teal-500/10 dark:to-lime-500/10" 
           : "text-muted-foreground hover:bg-gradient-to-r hover:from-teal-500/10 hover:to-lime-500/10 hover:text-teal-500"
@@ -65,7 +69,7 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href, active, onCl
       <Icon size={20} className={cn("min-w-[20px]", isActive ? "text-teal-500" : "")} />
       <span className={cn(
         "text-sm whitespace-nowrap",
-        expanded ? "opacity-100 visible" : "opacity-0 invisible w-0"
+        expanded ? "opacity-100 visible" : "opacity-0 invisible absolute"
       )}>
         {label}
       </span>
@@ -77,6 +81,14 @@ export const AdminNavbar: React.FC = () => {
   const location = useLocation();
   const { expanded, setExpanded, setIsAdmin } = useSidebar();
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const isAdmin = location.pathname.includes("/admin");
+
+  // Force collapsed state on mount for admin panel
+  useEffect(() => {
+    if (isAdmin) {
+      setExpanded(false);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -187,14 +199,14 @@ export const AdminNavbar: React.FC = () => {
         </nav>
       </div>
 
-      <div className="mt-auto p-4 space-y-2">
+      <div className="mt-auto px-3 pb-5">
         {/* Logout Button */}
         <Button 
           variant="ghost" 
           size="sm" 
           className={cn(
-            "w-full text-red-500 hover:bg-red-500/10 hover:text-red-500",
-            !expanded && "px-2"
+            "w-full text-red-500 hover:bg-red-500/10 hover:text-red-500 flex items-center rounded-lg",
+            expanded ? "px-3 justify-start" : "p-3 justify-center"
           )}
           onClick={() => {
             // Add logout logic here
@@ -203,8 +215,8 @@ export const AdminNavbar: React.FC = () => {
         >
           <LogOut size={20} className="min-w-[20px]" />
           <span className={cn(
-            "mr-2",
-            expanded ? "opacity-100 visible" : "opacity-0 invisible w-0"
+            "ml-2",
+            expanded ? "opacity-100 visible" : "opacity-0 invisible absolute"
           )}>
             {location.pathname.includes("/admin") ? "Logout" : "تسجيل الخروج"}
           </span>

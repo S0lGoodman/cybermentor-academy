@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminNavbar } from "../components/Sidebar";
 import { Navbar } from "../components/Navbar";
 import { useSidebar } from "../components/Sidebar";
 import { cn } from "../lib/utils";
+import { api } from "@/utils/api";
 import {
   Table,
   TableBody,
@@ -43,81 +44,59 @@ import {
   FileEdit,
   Settings,
   LayoutGrid,
-  List
+  List,
+  PlusIcon
 } from "lucide-react";
+import { CourseCreateModal } from "@/components/CourseCreateModal";
+import { supabase } from '@/lib/supabase';
+import type { Database } from '@/types/supabase';
 
-// Mock course data
-const mockCourses = [
-  {
-    id: "1",
-    name: "Ethical Hacking & Penetration Testing",
-    status: "published",
-    phase: "Level 1",
-    activeStudents: 84,
-    completedStudents: 40,
-    lastUpdated: "2024-03-01",
-    rating: 4.9,
-    modules: 12,
-    labs: 8
-  },
-  {
-    id: "2",
-    name: "Network Security Fundamentals",
-    status: "published",
-    phase: "Level 1",
-    activeStudents: 68,
-    completedStudents: 30,
-    lastUpdated: "2024-02-15",
-    rating: 4.7,
-    modules: 10,
-    labs: 6
-  },
-  {
-    id: "3",
-    name: "Secure Coding & Application Security",
-    status: "draft",
-    phase: "Level 2",
-    activeStudents: 0,
-    completedStudents: 0,
-    lastUpdated: "2024-03-08",
-    rating: 0,
-    modules: 8,
-    labs: 5
-  },
-  {
-    id: "4",
-    name: "Cyber Threat Intelligence",
-    status: "published",
-    phase: "Level 2",
-    activeStudents: 45,
-    completedStudents: 20,
-    lastUpdated: "2024-01-20",
-    rating: 4.8,
-    modules: 9,
-    labs: 4
-  },
-  {
-    id: "5",
-    name: "Digital Forensics",
-    status: "review",
-    phase: "Level 3",
-    activeStudents: 0,
-    completedStudents: 0,
-    lastUpdated: "2024-03-07",
-    rating: 0,
-    modules: 11,
-    labs: 7
-  }
-];
+type Course = Database['public']['Tables']['courses']['Row'];
 
 export const AdminCourses = () => {
   const { expanded } = useSidebar();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // tRPC hooks
+  const utils = api.useContext();
+  const { data: coursesData, isLoading } = api.courses.getAll.useQuery();
+  const { mutate: createCourse } = api.courses.create.useMutation({
+    onSuccess: () => {
+      // Invalidate the courses query to refetch the list
+      utils.courses.getAll.invalidate();
+    },
+  });
+
+  useEffect(() => {
+    async function fetchCourses() {
+      try {
+        const { data, error } = await supabase
+          .from('courses')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        setCourses(data || []);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchCourses();
+  }, []);
 
   // Filter courses based on search query and status
-  const filteredCourses = mockCourses.filter(course => {
+  const filteredCourses = (courses || []).filter(course => {
     const matchesSearch = course.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = selectedStatus === "all" || course.status === selectedStatus;
     return matchesSearch && matchesStatus;
@@ -136,6 +115,39 @@ export const AdminCourses = () => {
     }
   };
 
+  const handleCreateCourse = async (data: any) => {
+    try {
+      await createCourse({
+        name: data.name,
+        description: data.description,
+        phase: data.phase,
+        duration: data.duration,
+        difficulty: data.difficulty,
+        prerequisites: data.prerequisites || "",
+        thumbnail: "", // Handle thumbnail upload separately
+        status: "draft",
+      });
+    } catch (error) {
+      console.error("Error creating course:", error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex">
+        <AdminNavbar />
+        <div className="flex-1">
+          <Navbar />
+          <main className="p-6 ml-16">
+            <div className="max-w-7xl mx-auto">
+              <div>Loading courses...</div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex">
       <AdminNavbar />
@@ -151,9 +163,12 @@ export const AdminCourses = () => {
                   Create, edit and manage your courses
                 </p>
               </div>
-              <Button className="bg-cyber-primary hover:bg-cyber-primary/90">
-                <Plus className="h-4 w-4 mr-2" />
-                Create New Course
+              <Button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <PlusIcon className="h-5 w-5" />
+                Add Course
               </Button>
             </div>
 
@@ -431,6 +446,11 @@ export const AdminCourses = () => {
           </div>
         </main>
       </div>
+      <CourseCreateModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onCourseCreate={handleCreateCourse}
+      />
     </div>
   );
 }; 
