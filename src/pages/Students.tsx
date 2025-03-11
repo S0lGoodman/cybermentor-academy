@@ -49,25 +49,18 @@ export default function Students() {
         updated_at: string;
         role: string;
         status?: string;
-        user: {
-          user_metadata: {
-            is_new_user?: boolean;
-          } | null;
-        } | null;
       }
 
+      interface AuthUser {
+        id: string;
+        last_sign_in_at: string | null;
+        user_metadata: Record<string, any> | null;
+      }
+
+      // First get all student profiles
       let query = supabaseAdmin
         .from('profiles')
-        .select(`
-          id,
-          email,
-          name,
-          avatar,
-          role,
-          created_at,
-          updated_at,
-          user:auth.users(user_metadata)
-        `)
+        .select('*')
         .eq('role', 'student');
 
       // Apply filters
@@ -87,23 +80,45 @@ export default function Students() {
         query = query.lte('created_at', filters.dateRange.to.toISOString());
       }
 
-      const { data, error } = await query;
+      const { data: profilesData, error: profilesError } = await query;
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
+
+      // Get auth data using the admin API
+      const { data: { users: authUsers }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+
+      if (authError) throw authError;
+
+      // Create a map of user IDs to their auth data
+      const authDataMap = new Map<string, AuthUser>(
+        (authUsers || []).map(user => [
+          user.id,
+          {
+            id: user.id,
+            last_sign_in_at: user.last_sign_in_at,
+            user_metadata: user.user_metadata
+          }
+        ])
+      );
 
       // Transform the data to match our Student type
-      const transformedData: Student[] = (data as unknown as DbStudent[]).map(profile => ({
-        id: profile.id,
-        email: profile.email,
-        full_name: profile.name || 'N/A',
-        created_at: profile.created_at,
-        last_active: profile.updated_at,
-        status: profile.user?.user_metadata?.is_new_user ? 'pending' : 'active',
-        progress: 0,
-        enrolled_courses: 0,
-        role: profile.role,
-        user_metadata: profile.user?.user_metadata || undefined
-      }));
+      const transformedData: Student[] = (profilesData as DbStudent[]).map(profile => {
+        const authUser = authDataMap.get(profile.id);
+        const isPending = !authUser?.last_sign_in_at;
+        
+        return {
+          id: profile.id,
+          email: profile.email,
+          full_name: profile.name || 'N/A',
+          created_at: profile.created_at,
+          last_active: authUser?.last_sign_in_at || profile.updated_at,
+          status: isPending ? 'pending' : 'active',
+          progress: 0,
+          enrolled_courses: 0,
+          role: profile.role,
+          user_metadata: authUser?.user_metadata || undefined
+        };
+      });
 
       setStudents(transformedData);
     } catch (error: any) {
