@@ -70,8 +70,9 @@ export function StudentFiltersBar({ filters, onFilterChange, onReset }: StudentF
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="suspended">Suspended</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="invited">Invited</SelectItem>
+            <SelectItem value="suspended">Suspended</SelectItem>
           </SelectContent>
         </Select>
 

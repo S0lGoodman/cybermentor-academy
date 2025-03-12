@@ -1,4 +1,4 @@
-export type StudentStatus = 'active' | 'suspended' | 'inactive' | 'pending' | 'all';
+export type StudentStatus = 'active' | 'inactive' | 'invited' | 'suspended' | 'all';
 
 export interface Student {
   id: string;
@@ -10,11 +10,8 @@ export interface Student {
   progress?: number;
   enrolled_courses?: number;
   role: string;
-  user_metadata?: {
-    is_new_user?: boolean;
-    suspended_until?: string;
-    suspension_reason?: string;
-  };
+  suspended_until?: string | null;
+  suspension_reason?: string | null;
 }
 
 export interface StudentFilters {

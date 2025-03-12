@@ -234,148 +234,41 @@ export const AdminDashboard = () => {
                 icon={<Users className="h-5 w-5 text-cyber-primary" />}
                 trend={{ value: "+2", label: "new students" }}
               />
-              <Card className="transition-all duration-300 hover:shadow-lg hover:shadow-[#00C896]/10 hover:-translate-y-1 relative overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Active Students</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold transition-colors duration-200 group-hover:text-[#00C896]">
-                    <span className="inline-flex items-center">
-                      {activeUsers.length}
-                      <span className="ml-2 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#00C896] mt-1">
-                    Currently online
-                  </p>
-                  {/* Activity indicator */}
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#00C896] to-transparent opacity-25 animate-slide" />
-                </CardContent>
-              </Card>
+              <StatCard
+                title="Active Courses"
+                value={activeCourses.toString()}
+                icon={<BookOpen className="h-5 w-5 text-blue-500" />}
+                trend={{ value: "+5", label: "new courses" }}
+              />
               <StatCard
                 title="Payment Due"
                 value={paymentDue.toString()}
-                icon={<Clock className="h-5 w-5 text-amber-500" />}
-                trend={{ value: "+4", label: "this week" }}
+                icon={<AlertCircle className="h-5 w-5 text-red-500" />}
+                trend={{ value: "-2", label: "vs last week" }}
               />
             </div>
             
-            {/* Payment Management Section */}
+            {/* Quick Actions Section */}
             <div className="mb-8 animate-on-scroll">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-medium">Payment Management</CardTitle>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="h-8">
-                        <Search className="h-3.5 w-3.5 mr-1" /> 
-                        Find Student
-                      </Button>
-                      <Button variant="default" size="sm" className="h-8 bg-cyber-primary hover:bg-cyber-primary/90">
-                        Export Report
-                      </Button>
-                    </div>
-                  </div>
+                  <CardTitle className="text-lg font-medium">Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Payment Status</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Access Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {[
-                        { 
-                          id: "1",
-                          name: "Emma Davis", 
-                          status: "overdue", 
-                          dueDate: "2024-03-01",
-                          amount: 1500,
-                          accessEnabled: false
-                        },
-                        { 
-                          id: "2",
-                          name: "John Smith", 
-                          status: "due", 
-                          dueDate: "2024-03-10",
-                          amount: 1500,
-                          accessEnabled: true
-                        },
-                        { 
-                          id: "3",
-                          name: "Olivia Wilson", 
-                          status: "paid", 
-                          dueDate: "2024-04-01",
-                          amount: 1500,
-                          accessEnabled: true
-                        },
-                      ].map((student) => (
-                        <TableRow key={student.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback>{student.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                              </Avatar>
-                              <span className="font-medium text-sm">{student.name}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              student.status === "paid" ? "default" :
-                              student.status === "due" ? "secondary" :
-                              "destructive"
-                            }>
-                              {student.status === "paid" ? "Paid" :
-                               student.status === "due" ? "Due Soon" :
-                               "Overdue"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm">{new Date(student.dueDate).toLocaleDateString()}</span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm font-medium">{student.amount} MAD</span>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={student.accessEnabled ? "outline" : "destructive"}>
-                              {student.accessEnabled ? "Active" : "Suspended"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button 
-                                size="sm" 
-                                variant={student.accessEnabled ? "destructive" : "default"}
-                                className="h-7 text-xs"
-                                onClick={() => handleAccessToggle(student.id, student.accessEnabled)}
-                              >
-                                {student.accessEnabled ? (
-                                  <>
-                                    <Ban className="h-3 w-3 mr-1" />
-                                    Suspend
-                                  </>
-                                ) : (
-                                  <>
-                                    <CheckCircle className="h-3 w-3 mr-1" />
-                                    Enable
-                                  </>
-                                )}
-                              </Button>
-                              <Button size="sm" variant="outline" className="h-7 text-xs">
-                                Details
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Button className="w-full justify-start" variant="outline">
+                      <UserPlus className="h-4 w-4 mr-2" /> Add New Student
+                    </Button>
+                    <Button className="w-full justify-start" variant="outline">
+                      <BookOpen className="h-4 w-4 mr-2" /> Create New Course
+                    </Button>
+                    <Button className="w-full justify-start" variant="outline">
+                      <Code className="h-4 w-4 mr-2" /> Add Lab
+                    </Button>
+                    <Button className="w-full justify-start" variant="outline">
+                      <Award className="h-4 w-4 mr-2" /> Issue Certification
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -487,28 +380,6 @@ export const AdminDashboard = () => {
             
             {/* Quick Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-on-scroll">
-              <Card className="lg:col-span-1">
-                <CardHeader>
-                  <CardTitle className="text-lg font-medium">Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <Button className="w-full justify-start" variant="outline">
-                      <UserPlus className="h-4 w-4 mr-2" /> Add New Student
-                    </Button>
-                    <Button className="w-full justify-start" variant="outline">
-                      <BookOpen className="h-4 w-4 mr-2" /> Create New Course
-                    </Button>
-                    <Button className="w-full justify-start" variant="outline">
-                      <Code className="h-4 w-4 mr-2" /> Add Lab
-                    </Button>
-                    <Button className="w-full justify-start" variant="outline">
-                      <Award className="h-4 w-4 mr-2" /> Issue Certification
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-              
               <Card className="lg:col-span-2">
                 <CardHeader>
                   <div className="flex items-center justify-between">

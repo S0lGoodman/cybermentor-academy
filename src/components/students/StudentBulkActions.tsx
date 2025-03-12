@@ -24,7 +24,6 @@ export function StudentBulkActions({ selectedCount, onAction, disabled }: Studen
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [suspensionReason, setSuspensionReason] = useState("");
-  const [suspensionDuration, setSuspensionDuration] = useState("7");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
 
@@ -88,17 +87,6 @@ export function StudentBulkActions({ selectedCount, onAction, disabled }: Studen
                 placeholder="Enter the reason for suspension..."
               />
             </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="bulkDuration">Duration (days)</Label>
-              <Input
-                id="bulkDuration"
-                type="number"
-                value={suspensionDuration}
-                onChange={(e) => setSuspensionDuration(e.target.value)}
-                min="1"
-              />
-            </div>
           </div>
           
           <DialogFooter>
@@ -112,11 +100,11 @@ export function StudentBulkActions({ selectedCount, onAction, disabled }: Studen
                   type: 'suspend',
                   studentIds: [],
                   metadata: {
-                    reason: suspensionReason,
-                    duration: parseInt(suspensionDuration)
+                    reason: suspensionReason
                   }
                 });
                 setShowSuspendDialog(false);
+                setSuspensionReason("");
               }}
             >
               Suspend Students

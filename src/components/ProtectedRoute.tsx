@@ -9,13 +9,20 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, isAdmin }: ProtectedRouteProps) {
-  const { user, loading } = useAuth();
+  const { user, loading, checkSuspension } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [checkingRole, setCheckingRole] = useState(true);
 
   useEffect(() => {
-    const checkUserRole = async () => {
+    const checkAccess = async () => {
       if (user) {
+        // First check for suspension
+        const isSuspended = await checkSuspension();
+        if (isSuspended) {
+          setCheckingRole(false);
+          return;
+        }
+
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -27,8 +34,8 @@ export function ProtectedRoute({ children, isAdmin }: ProtectedRouteProps) {
       setCheckingRole(false);
     };
 
-    checkUserRole();
-  }, [user]);
+    checkAccess();
+  }, [user, checkSuspension]);
 
   // Show loading state while checking authentication
   if (loading || checkingRole) {

@@ -34,9 +34,14 @@ export const Login = () => {
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, status')
           .eq('id', user.id)
           .single();
+        
+        // Check if account is suspended
+        if (profile?.status === 'suspended') {
+          throw new Error("لا يمكنك الوصول إلى الأكاديمية في الوقت الحالي! يرجى الاتصال بالدعم");
+        }
         
         // Set localStorage values
         localStorage.setItem('isAuthenticated', 'true');

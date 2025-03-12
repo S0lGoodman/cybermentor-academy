@@ -24,33 +24,9 @@ import { Leaderboard } from "./pages/Leaderboard";
 import Students from "./pages/Students";
 import { api, trpcClient } from "./utils/api";
 import { ResetPassword } from "@/pages/ResetPassword";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
-
-// Protected Route wrapper
-const ProtectedRoute = ({ children, isAdmin }: { children: React.ReactNode; isAdmin?: boolean }) => {
-  // For testing purposes, we'll simulate authentication with localStorage
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
-  const userRole = localStorage.getItem("userRole");
-
-  // If not authenticated, redirect to login
-  if (!isAuthenticated || !userRole) {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("userRole");
-    return <Navigate to="/login" replace />;
-  }
-
-  // Check role-based access
-  if (isAdmin && userRole !== "admin") {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (!isAdmin && userRole !== "student") {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-};
 
 const App = () => {
   // Get initial theme from localStorage or default to dark

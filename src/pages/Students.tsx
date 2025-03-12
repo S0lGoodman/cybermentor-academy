@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { Student, StudentFilters, BulkAction, StudentStatus } from "@/types/student";
+import { User } from "@supabase/supabase-js";
 import { StudentActionMenu } from "@/components/students/StudentActionMenu";
 import { StudentFiltersBar } from "@/components/students/StudentFilters";
 import { StudentBulkActions } from "@/components/students/StudentBulkActions";
@@ -40,88 +41,62 @@ export default function Students() {
   const fetchStudents = async () => {
     try {
       setIsLoading(true);
-      interface DbStudent {
-        id: string;
-        email: string;
-        name: string | null;
-        avatar: string | null;
-        created_at: string;
-        updated_at: string;
-        role: string;
-        status?: string;
-      }
-
-      interface AuthUser {
-        id: string;
-        last_sign_in_at: string | null;
-        user_metadata: Record<string, any> | null;
-      }
-
-      // First get all student profiles
-      let query = supabaseAdmin
+      
+      // Get all student profiles
+      const { data: profiles, error: profilesError } = await supabaseAdmin
         .from('profiles')
         .select('*')
         .eq('role', 'student');
 
-      // Apply filters
-      if (filters.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-
-      if (filters.search) {
-        query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
-      }
-
-      if (filters.dateRange?.from) {
-        query = query.gte('created_at', filters.dateRange.from.toISOString());
-      }
-
-      if (filters.dateRange?.to) {
-        query = query.lte('created_at', filters.dateRange.to.toISOString());
-      }
-
-      const { data: profilesData, error: profilesError } = await query;
-
       if (profilesError) throw profilesError;
+      if (!profiles) throw new Error('No profiles found');
 
-      // Get auth data using the admin API
-      const { data: { users: authUsers }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+      // Get all users from auth.users
+      const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
+      
+      if (usersError) throw usersError;
 
-      if (authError) throw authError;
+      // Create a map of auth users for quick lookup
+      const authUsers = new Map<string, User>();
+      users.forEach((user: User) => {
+        authUsers.set(user.id, user);
+      });
 
-      // Create a map of user IDs to their auth data
-      const authDataMap = new Map<string, AuthUser>(
-        (authUsers || []).map(user => [
-          user.id,
-          {
-            id: user.id,
-            last_sign_in_at: user.last_sign_in_at,
-            user_metadata: user.user_metadata
-          }
-        ])
-      );
-
-      // Transform the data to match our Student type
-      const transformedData: Student[] = (profilesData as DbStudent[]).map(profile => {
-        const authUser = authDataMap.get(profile.id);
-        const isPending = !authUser?.last_sign_in_at;
+      // Transform and update data
+      const transformedData = await Promise.all(profiles.map(async (profile) => {
+        const authUser = authUsers.get(profile.id);
         
+        // Check if user has confirmed email and signed in
+        if (profile.status === 'invited' && authUser?.confirmed_at && authUser?.last_sign_in_at) {
+          // Update status to active
+          const { error: updateError } = await supabaseAdmin
+            .from('profiles')
+            .update({ status: 'active' })
+            .eq('id', profile.id);
+          
+          if (!updateError) {
+            profile.status = 'active';
+          }
+        }
+
         return {
           id: profile.id,
           email: profile.email,
           full_name: profile.name || 'N/A',
           created_at: profile.created_at,
           last_active: authUser?.last_sign_in_at || profile.updated_at,
-          status: isPending ? 'pending' : 'active',
+          status: profile.status as StudentStatus,
           progress: 0,
           enrolled_courses: 0,
           role: profile.role,
-          user_metadata: authUser?.user_metadata || undefined
+          suspended_until: profile.suspended_until,
+          suspension_reason: profile.suspension_reason
         };
-      });
+      }));
 
       setStudents(transformedData);
     } catch (error: any) {
+      console.error('Fetch error:', error);
       toast({
         title: "Error",
         description: error.message,
@@ -146,20 +121,60 @@ export default function Students() {
   // Handle individual student actions
   const handleStudentAction = async (studentId: string, action: string, metadata?: any) => {
     try {
+      const student = students.find(s => s.id === studentId);
+      if (!student) throw new Error("Student not found");
+
       switch (action) {
+        case 'delete':
+          try {
+            // First delete from profiles table
+            const { error: profileDeleteError } = await supabaseAdmin
+              .from('profiles')
+              .delete()
+              .eq('id', studentId);
+            
+            if (profileDeleteError) throw profileDeleteError;
+
+            // Then delete from auth.users
+            const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(studentId);
+            if (authDeleteError) throw authDeleteError;
+
+            toast({
+              title: "Student Deleted",
+              description: `${student.full_name}'s account has been permanently deleted.`
+            });
+            
+            // Force refresh the students list
+            await fetchStudents();
+          } catch (deleteError: any) {
+            console.error('Delete error:', deleteError);
+            throw new Error(deleteError.message || "Failed to delete user");
+          }
+          break;
+
         case 'suspend':
-          await supabaseAdmin
+          if (!metadata?.reason) {
+            throw new Error("Reason is required for suspension");
+          }
+          const { error: suspendError } = await supabaseAdmin
             .from('profiles')
             .update({
               status: 'suspended',
-              suspended_until: new Date(Date.now() + metadata.duration * 24 * 60 * 60 * 1000).toISOString(),
+              suspended_until: null,
               suspension_reason: metadata.reason
             })
             .eq('id', studentId);
+          
+          if (suspendError) throw suspendError;
+
+          toast({
+            title: "Student Suspended",
+            description: `${student.full_name} has been suspended.`
+          });
           break;
 
         case 'activate':
-          await supabaseAdmin
+          const { error: activateError } = await supabaseAdmin
             .from('profiles')
             .update({
               status: 'active',
@@ -167,35 +182,85 @@ export default function Students() {
               suspension_reason: null
             })
             .eq('id', studentId);
-          break;
+          
+          if (activateError) throw activateError;
 
-        case 'delete':
-          await supabaseAdmin.auth.admin.deleteUser(studentId);
+          toast({
+            title: "Student Activated",
+            description: `${student.full_name}'s account has been activated.`
+          });
           break;
 
         case 'reset_password':
-          await supabaseAdmin.auth.admin.generateLink({
+          const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
             type: 'recovery',
-            email: students.find(s => s.id === studentId)?.email || ''
+            email: student.email
+          });
+          if (resetError) throw resetError;
+          if (!resetData) throw new Error("Failed to generate reset link");
+
+          toast({
+            title: "Password Reset Link Sent",
+            description: `A password reset link has been sent to ${student.email}`
+          });
+          break;
+
+        case 'edit':
+          if (!metadata?.name && !metadata?.email) {
+            throw new Error("No changes provided");
+          }
+          const updates: any = {};
+          if (metadata.name) updates.name = metadata.name;
+          
+          if (metadata.email) {
+            // Update email in auth.users first
+            const { error: emailError } = await supabaseAdmin.auth.admin.updateUserById(
+              studentId,
+              { email: metadata.email }
+            );
+            if (emailError) throw emailError;
+            updates.email = metadata.email;
+          }
+
+          // Update profile if we have changes
+          if (Object.keys(updates).length > 0) {
+            const { error: updateError } = await supabaseAdmin
+              .from('profiles')
+              .update(updates)
+              .eq('id', studentId);
+            
+            if (updateError) throw updateError;
+          }
+
+          toast({
+            title: "Profile Updated",
+            description: `${student.full_name}'s profile has been updated.`
           });
           break;
 
         case 'send_email':
-          // Implement email sending logic
-          console.log('Sending email:', metadata);
+          if (!metadata?.subject || !metadata?.message) {
+            throw new Error("Email subject and message are required");
+          }
+          // Here you would integrate with your email service
+          // For now, we'll just show a success message
+          toast({
+            title: "Email Sent",
+            description: `Email sent to ${student.email}`
+          });
           break;
+
+        default:
+          throw new Error(`Unknown action: ${action}`);
       }
 
-      toast({
-        title: "Success",
-        description: "Action completed successfully",
-      });
-
-      fetchStudents();
+      // Refresh the students list
+      await fetchStudents();
     } catch (error: any) {
+      console.error('Action error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An error occurred while performing the action",
         variant: "destructive",
       });
     }
@@ -225,7 +290,7 @@ export default function Students() {
         return 'destructive';
       case 'inactive':
         return 'secondary';
-      case 'pending':
+      case 'invited':
         return 'outline';
       default:
         return 'default';

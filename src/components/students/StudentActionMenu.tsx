@@ -24,16 +24,15 @@ export function StudentActionMenu({ student, onAction }: StudentActionMenuProps)
   const [showSuspendDialog, setShowSuspendDialog] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [suspensionReason, setSuspensionReason] = useState("");
-  const [suspensionDuration, setSuspensionDuration] = useState("7");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
 
   const handleSuspend = async () => {
     await onAction("suspend", {
-      reason: suspensionReason,
-      duration: parseInt(suspensionDuration)
+      reason: suspensionReason
     });
     setShowSuspendDialog(false);
+    setSuspensionReason("");
   };
 
   const handleSendEmail = async () => {
@@ -113,17 +112,6 @@ export function StudentActionMenu({ student, onAction }: StudentActionMenuProps)
                 value={suspensionReason}
                 onChange={(e) => setSuspensionReason(e.target.value)}
                 placeholder="Enter the reason for suspension..."
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="duration">Duration (days)</Label>
-              <Input
-                id="duration"
-                type="number"
-                value={suspensionDuration}
-                onChange={(e) => setSuspensionDuration(e.target.value)}
-                min="1"
               />
             </div>
           </div>
