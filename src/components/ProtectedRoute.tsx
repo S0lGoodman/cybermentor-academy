@@ -14,27 +14,45 @@ export function ProtectedRoute({ children, isAdmin }: ProtectedRouteProps) {
   const [checkingRole, setCheckingRole] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     const checkAccess = async () => {
       if (user) {
-        // First check for suspension
-        const isSuspended = await checkSuspension();
-        if (isSuspended) {
-          setCheckingRole(false);
-          return;
-        }
+        try {
+          // First check for suspension
+          const isSuspended = await checkSuspension();
+          if (mounted && isSuspended) {
+            setCheckingRole(false);
+            return;
+          }
 
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-        
-        setUserRole(profile?.role || null);
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          if (error) {
+            console.error('Error fetching user role:', error);
+          }
+
+          if (mounted) {
+            setUserRole(profile?.role || null);
+          }
+        } catch (error) {
+          console.error('Error checking access:', error);
+        }
       }
-      setCheckingRole(false);
+      if (mounted) {
+        setCheckingRole(false);
+      }
     };
 
     checkAccess();
+
+    return () => {
+      mounted = false;
+    };
   }, [user, checkSuspension]);
 
   // Show loading state while checking authentication
@@ -51,14 +69,16 @@ export function ProtectedRoute({ children, isAdmin }: ProtectedRouteProps) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check role-based access
-  if (isAdmin && userRole !== 'admin') {
-    return <Navigate to="/login" replace />;
+  // For admin routes, only redirect if we're sure the user is not an admin
+  if (isAdmin && userRole && userRole !== 'admin') {
+    return <Navigate to="/" replace />;
   }
 
-  if (!isAdmin && userRole !== 'student') {
-    return <Navigate to="/login" replace />;
+  // For student routes, only redirect if we're sure the user is not a student
+  if (!isAdmin && userRole && userRole !== 'student') {
+    return <Navigate to="/" replace />;
   }
 
+  // If we're still checking the role or the role matches, render the children
   return <>{children}</>;
 } 

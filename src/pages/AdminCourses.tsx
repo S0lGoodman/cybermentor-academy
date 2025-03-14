@@ -1,456 +1,555 @@
 import { useState, useEffect } from "react";
 import { AdminNavbar } from "../components/Sidebar";
 import { Navbar } from "../components/Navbar";
-import { useSidebar } from "../components/Sidebar";
-import { cn } from "../lib/utils";
-import { api } from "@/utils/api";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
+import { Button } from "../components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
-import { Button } from "../components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 import { Input } from "../components/ui/input";
+import { Textarea } from "../components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Badge } from "../components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
-import {
-  Search,
-  Plus,
-  MoreVertical,
-  Edit,
-  Trash2,
-  Eye,
-  Filter,
-  Users,
-  BookOpen,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  FileEdit,
-  Settings,
-  LayoutGrid,
-  List,
-  PlusIcon
-} from "lucide-react";
-import { CourseCreateModal } from "@/components/CourseCreateModal";
-import { supabase } from '@/lib/supabase';
-import type { Database } from '@/types/supabase';
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { supabase } from "@/lib/supabase";
+import { Loader2, Plus, Upload, Video, Edit2, Trash2 } from "lucide-react";
+import { useSidebar } from "../components/Sidebar";
+import { slugify } from "@/lib/utils";
 
-type Course = Database['public']['Tables']['courses']['Row'];
+// Form validation schema
+const courseSchema = z.object({
+  name: z.string().min(3, "Course name must be at least 3 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  phase: z.enum([
+    "المستوى الأول: المبادئ الأساسية",
+    "المستوى الثاني: المواضيع المتوسطة",
+    "المستوى الثالث: المواضيع المتقدمة",
+    "الامتحان النهائي والشهادة"
+  ]),
+  order: z.number().min(0, "Order must be a positive number"),
+  slug: z.string(),
+});
+
+type CourseFormValues = z.infer<typeof courseSchema>;
+
+interface Course extends CourseFormValues {
+  id: string;
+  status: "draft" | "active";
+  video_url?: string;
+}
 
 export const AdminCourses = () => {
-  const { expanded } = useSidebar();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const { setExpanded, setIsAdmin } = useSidebar();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-  // tRPC hooks
-  const utils = api.useContext();
-  const { data: coursesData, isLoading } = api.courses.getAll.useQuery();
-  const { mutate: createCourse } = api.courses.create.useMutation({
-    onSuccess: () => {
-      // Invalidate the courses query to refetch the list
-      utils.courses.getAll.invalidate();
+  const form = useForm<CourseFormValues>({
+    resolver: zodResolver(courseSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      phase: "المستوى الأول: المبادئ الأساسية",
+      order: 0,
+      slug: ""
     },
   });
 
   useEffect(() => {
-    async function fetchCourses() {
-      try {
+    setExpanded(true);
+    setIsAdmin(true);
+    fetchCourses();
+  }, [setExpanded, setIsAdmin]);
+
+  const fetchCourses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .order('phase')
+        .order('order');
+
+      if (error) throw error;
+      setCourses(data || []);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      toast.error('Failed to fetch courses');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVideoUpload = async (courseId: string, file: File) => {
+    try {
+      setUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${courseId}/intro-video.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('course-videos')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('course-videos')
+        .getPublicUrl(filePath);
+
+      await supabase
+        .from('courses')
+        .update({ video_url: publicUrl })
+        .eq('id', courseId);
+
+      toast.success('Video uploaded successfully');
+      fetchCourses();
+    } catch (error) {
+      console.error('Error uploading video:', error);
+      toast.error('Failed to upload video');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onSubmit = async (values: CourseFormValues) => {
+    try {
+      // Generate slug from name
+      const slug = slugify(values.name);
+      const dataWithSlug = { ...values, slug };
+
+      if (isEditing && selectedCourse) {
         const { data, error } = await supabase
           .from('courses')
-          .select('*')
-          .order('created_at', { ascending: false });
+          .update(dataWithSlug)
+          .eq('id', selectedCourse.id);
 
         if (error) {
-          throw error;
+          console.error('Error updating course:', error);
+          toast.error(`Failed to update course: ${error.message}`);
+          return;
         }
+      } else {
+        const { data, error } = await supabase
+          .from('courses')
+          .insert([{ ...dataWithSlug, status: 'draft' }])
+          .select();
 
-        setCourses(data || []);
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-      } finally {
-        setLoading(false);
+        if (error) {
+          console.error('Error creating course:', error);
+          toast.error(`Failed to create course: ${error.message}`);
+          return;
+        }
       }
-    }
 
-    fetchCourses();
-  }, []);
-
-  // Filter courses based on search query and status
-  const filteredCourses = (courses || []).filter(course => {
-    const matchesSearch = course.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = selectedStatus === "all" || course.status === selectedStatus;
-    return matchesSearch && matchesStatus;
-  });
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "published":
-        return "default";
-      case "draft":
-        return "secondary";
-      case "review":
-        return "warning";
-      default:
-        return "outline";
-    }
-  };
-
-  const handleCreateCourse = async (data: any) => {
-    try {
-      await createCourse({
-        name: data.name,
-        description: data.description,
-        phase: data.phase,
-        duration: data.duration,
-        difficulty: data.difficulty,
-        prerequisites: data.prerequisites || "",
-        thumbnail: "", // Handle thumbnail upload separately
-        status: "draft",
-      });
+      form.reset();
+      setIsEditing(false);
+      setSelectedCourse(null);
+      fetchCourses();
+      toast.success(isEditing ? 'Course updated successfully' : 'Course created successfully');
     } catch (error) {
-      console.error("Error creating course:", error);
+      console.error('Unexpected error saving course:', error);
+      toast.error('An unexpected error occurred while saving the course');
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex">
-        <AdminNavbar />
-        <div className="flex-1">
-          <Navbar />
-          <main className="p-6 ml-16">
-            <div className="max-w-7xl mx-auto">
-              <div>Loading courses...</div>
-            </div>
-          </main>
-        </div>
-      </div>
-    );
-  }
+  const handleEdit = (course: Course) => {
+    setSelectedCourse(course);
+    setIsEditing(true);
+    form.reset({
+      name: course.name,
+      description: course.description,
+      phase: course.phase,
+      order: course.order,
+      slug: course.slug,
+    });
+  };
+
+  const handleDelete = async (courseId: string) => {
+    if (!confirm('Are you sure you want to delete this course?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('courses')
+        .delete()
+        .eq('id', courseId);
+
+      if (error) throw error;
+      toast.success('Course deleted successfully');
+      fetchCourses();
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      toast.error('Failed to delete course');
+    }
+  };
+
+  const handleStatusToggle = async (courseId: string, currentStatus: 'draft' | 'active') => {
+    try {
+      const newStatus = currentStatus === 'draft' ? 'active' : 'draft';
+      const { error } = await supabase
+        .from('courses')
+        .update({ status: newStatus })
+        .eq('id', courseId);
+
+      if (error) throw error;
+      toast.success(`Course ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
+      fetchCourses();
+    } catch (error) {
+      console.error('Error updating course status:', error);
+      toast.error('Failed to update course status');
+    }
+  };
 
   return (
     <div className="min-h-screen flex">
       <AdminNavbar />
+      
       <div className="flex-1">
         <Navbar />
+        
         <main className="p-6 ml-16">
           <div className="max-w-7xl mx-auto">
-            {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-2xl font-bold">Course Management</h1>
                 <p className="text-muted-foreground">
-                  Create, edit and manage your courses
+                  Create and manage pathway courses
                 </p>
               </div>
-              <Button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-2"
-              >
-                <PlusIcon className="h-5 w-5" />
-                Add Course
-              </Button>
-            </div>
-
-            {/* Filters and Search */}
-            <Card className="mb-6">
-              <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/70" />
-                      <Input
-                        type="search"
-                        placeholder="Search courses..."
-                        className="pl-8 bg-background"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+              
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add New Course
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{isEditing ? 'Edit Course' : 'Create New Course'}</DialogTitle>
+                    <DialogDescription>
+                      Fill in the course details below
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Course Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-[120px]">
-                          <Filter className="h-4 w-4 mr-2" />
-                          Status
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => setSelectedStatus("all")}>
-                          All Courses
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setSelectedStatus("published")}>
-                          Published
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setSelectedStatus("draft")}>
-                          Drafts
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setSelectedStatus("review")}>
-                          In Review
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <div className="flex border rounded-md">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn(
-                          "rounded-r-none",
-                          viewMode === "grid" && "bg-muted"
+                      
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Description</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                        onClick={() => setViewMode("grid")}
-                      >
-                        <LayoutGrid className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn(
-                          "rounded-l-none border-l",
-                          viewMode === "list" && "bg-muted"
-                        )}
-                        onClick={() => setViewMode("list")}
-                      >
-                        <List className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Courses List */}
-            {viewMode === "list" ? (
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Course</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Phase</TableHead>
-                        <TableHead>Students</TableHead>
-                        <TableHead>Content</TableHead>
-                        <TableHead>Last Updated</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredCourses.map((course) => (
-                        <TableRow key={course.id}>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{course.name}</div>
-                              {course.rating > 0 && (
-                                <div className="text-sm text-muted-foreground flex items-center gap-1">
-                                  ⭐ {course.rating}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusBadgeVariant(course.status)}>
-                              {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm">{course.phase}</span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-1 text-sm">
-                                <Users className="h-3 w-3 text-muted-foreground" />
-                                <span>{course.activeStudents} active</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-sm">
-                                <CheckCircle className="h-3 w-3 text-muted-foreground" />
-                                <span>{course.completedStudents} completed</span>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-1 text-sm">
-                                <BookOpen className="h-3 w-3 text-muted-foreground" />
-                                <span>{course.modules} modules</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-sm">
-                                <Settings className="h-3 w-3 text-muted-foreground" />
-                                <span>{course.labs} labs</span>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-sm">
-                                {new Date(course.lastUpdated).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    View Course
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    <FileEdit className="h-4 w-4 mr-2" />
-                                    Edit Content
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    <Settings className="h-4 w-4 mr-2" />
-                                    Manage Labs
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Edit Settings
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-red-600">
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete Course
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCourses.map((course) => (
-                  <Card key={course.id} className="transition-all duration-300 hover:shadow-lg">
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                          <CardTitle className="text-base">{course.name}</CardTitle>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={getStatusBadgeVariant(course.status)}>
-                              {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
-                            </Badge>
-                            <span className="text-sm text-muted-foreground">{course.phase}</span>
-                          </div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Course
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <FileEdit className="h-4 w-4 mr-2" />
-                              Edit Content
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Settings className="h-4 w-4 mr-2" />
-                              Manage Labs
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit Settings
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600">
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete Course
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <div className="text-sm text-muted-foreground">Students</div>
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-1 text-sm">
-                                <Users className="h-3 w-3 text-muted-foreground" />
-                                <span>{course.activeStudents} active</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-sm">
-                                <CheckCircle className="h-3 w-3 text-muted-foreground" />
-                                <span>{course.completedStudents} completed</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="text-sm text-muted-foreground">Content</div>
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-1 text-sm">
-                                <BookOpen className="h-3 w-3 text-muted-foreground" />
-                                <span>{course.modules} modules</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-sm">
-                                <Settings className="h-3 w-3 text-muted-foreground" />
-                                <span>{course.labs} labs</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            <span>Updated {new Date(course.lastUpdated).toLocaleDateString()}</span>
-                          </div>
-                          {course.rating > 0 && (
-                            <div className="flex items-center gap-1">
-                              ⭐ {course.rating}
-                            </div>
+                      />
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="phase"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Phase</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select phase" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="المستوى الأول: المبادئ الأساسية">Level 1: Fundamentals</SelectItem>
+                                  <SelectItem value="المستوى الثاني: المواضيع المتوسطة">Level 2: Intermediate</SelectItem>
+                                  <SelectItem value="المستوى الثالث: المواضيع المتقدمة">Level 3: Advanced</SelectItem>
+                                  <SelectItem value="الامتحان النهائي والشهادة">Final Exam</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
                           )}
-                        </div>
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="order"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Display Order</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  {...field}
+                                  value={field.value || 0}
+                                  onChange={(e) => {
+                                    const value = e.target.value === '' ? 0 : parseInt(e.target.value);
+                                    field.onChange(isNaN(value) ? 0 : value);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                      
+                      <Button type="submit" className="w-full">
+                        {isEditing ? 'Update Course' : 'Create Course'}
+                      </Button>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            </div>
+            
+            <Tabs defaultValue="active" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="active">Active Courses</TabsTrigger>
+                <TabsTrigger value="draft">Draft Courses</TabsTrigger>
+              </TabsList>
+              
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : (
+                <>
+                  <TabsContent value="active">
+                    <div className="grid gap-6">
+                      {[
+                        "المستوى الأول: المبادئ الأساسية",
+                        "المستوى الثاني: المواضيع المتوسطة",
+                        "المستوى الثالث: المواضيع المتقدمة",
+                        "الامتحان النهائي والشهادة"
+                      ].map((phase) => {
+                        const phaseCourses = courses.filter(
+                          course => course.status === 'active' && course.phase === phase
+                        );
+                        
+                        if (phaseCourses.length === 0) return null;
+                        
+                        return (
+                          <div key={phase}>
+                            <h2 className="text-lg font-semibold mb-4">
+                              {phase === "المستوى الأول: المبادئ الأساسية" && "Level 1: Fundamentals"}
+                              {phase === "المستوى الثاني: المواضيع المتوسطة" && "Level 2: Intermediate"}
+                              {phase === "المستوى الثالث: المواضيع المتقدمة" && "Level 3: Advanced"}
+                              {phase === "الامتحان النهائي والشهادة" && "Final Exam"}
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {phaseCourses.map(course => (
+                                <CourseCard
+                                  key={course.id}
+                                  course={course}
+                                  onEdit={handleEdit}
+                                  onDelete={handleDelete}
+                                  onVideoUpload={handleVideoUpload}
+                                  onStatusToggle={handleStatusToggle}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="draft">
+                    <div className="grid gap-6">
+                      {[
+                        "المستوى الأول: المبادئ الأساسية",
+                        "المستوى الثاني: المواضيع المتوسطة",
+                        "المستوى الثالث: المواضيع المتقدمة",
+                        "الامتحان النهائي والشهادة"
+                      ].map((phase) => {
+                        const phaseCourses = courses.filter(
+                          course => course.status === 'draft' && course.phase === phase
+                        );
+                        
+                        if (phaseCourses.length === 0) return null;
+                        
+                        return (
+                          <div key={phase}>
+                            <h2 className="text-lg font-semibold mb-4">
+                              {phase === "المستوى الأول: المبادئ الأساسية" && "Level 1: Fundamentals"}
+                              {phase === "المستوى الثاني: المواضيع المتوسطة" && "Level 2: Intermediate"}
+                              {phase === "المستوى الثالث: المواضيع المتقدمة" && "Level 3: Advanced"}
+                              {phase === "الامتحان النهائي والشهادة" && "Final Exam"}
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {phaseCourses.map(course => (
+                                <CourseCard
+                                  key={course.id}
+                                  course={course}
+                                  onEdit={handleEdit}
+                                  onDelete={handleDelete}
+                                  onVideoUpload={handleVideoUpload}
+                                  onStatusToggle={handleStatusToggle}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </TabsContent>
+                </>
+              )}
+            </Tabs>
           </div>
         </main>
       </div>
-      <CourseCreateModal
-        open={isCreateModalOpen}
-        onOpenChange={setIsCreateModalOpen}
-        onCourseCreate={handleCreateCourse}
-      />
     </div>
+  );
+};
+
+const CourseCard = ({
+  course,
+  onEdit,
+  onDelete,
+  onVideoUpload,
+  onStatusToggle,
+}: {
+  course: Course;
+  onEdit: (course: Course) => void;
+  onDelete: (courseId: string) => void;
+  onVideoUpload: (courseId: string, file: File) => Promise<void>;
+  onStatusToggle: (courseId: string, currentStatus: 'draft' | 'active') => Promise<void>;
+}) => {
+  const handleVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await onVideoUpload(course.id, file);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg font-medium">{course.name}</CardTitle>
+              <Badge variant={course.status === 'active' ? 'default' : 'secondary'}>
+                {course.status}
+              </Badge>
+            </div>
+            <CardDescription className="mt-1.5">
+              {course.description}
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-4">
+              <span>📊 Phase {course.phase}</span>
+              <span>🔢 Order: {course.order}</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEdit(course)}
+            >
+              <Edit2 className="h-4 w-4 mr-1" />
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDelete(course.id)}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
+            </Button>
+            <div className="relative">
+              <Input
+                type="file"
+                accept="video/*"
+                onChange={handleVideoChange}
+                className="hidden"
+                id={`video-${course.id}`}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+              >
+                <label htmlFor={`video-${course.id}`}>
+                  <Upload className="h-4 w-4 mr-1" />
+                  Upload Video
+                </label>
+              </Button>
+            </div>
+            <Button
+              variant={course.status === 'active' ? 'destructive' : 'default'}
+              size="sm"
+              onClick={() => onStatusToggle(course.id, course.status)}
+            >
+              {course.status === 'active' ? 'Deactivate' : 'Activate'}
+            </Button>
+          </div>
+          
+          {course.video_url && (
+            <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+              <Video className="h-4 w-4" />
+              <span>Video uploaded</span>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }; 
