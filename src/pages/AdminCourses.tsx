@@ -34,28 +34,47 @@ import {
 } from "../components/ui/select";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Badge } from "../components/ui/badge";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Plus, Upload, Video, Edit2, Trash2 } from "lucide-react";
+import { Loader2, Plus, Upload, Video, Edit2, Trash2, GripVertical, FileText } from "lucide-react";
 import { useSidebar } from "../components/Sidebar";
 import { slugify } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { useNavigate } from "react-router-dom";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import ReactMarkdown from "react-markdown";
 
-// Form validation schema
+const phases = [
+  "المستوى الأول: المبادئ الأساسية",
+  "المستوى الثاني: المواضيع المتوسطة",
+  "المستوى الثالث: المواضيع المتقدمة",
+  "الامتحان النهائي والشهادة"
+] as const;
+
 const courseSchema = z.object({
   name: z.string().min(3, "Course name must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  phase: z.enum([
-    "المستوى الأول: المبادئ الأساسية",
-    "المستوى الثاني: المواضيع المتوسطة",
-    "المستوى الثالث: المواضيع المتقدمة",
-    "الامتحان النهائي والشهادة"
-  ]),
-  order: z.number().min(0, "Order must be a positive number"),
+  learning_objectives: z.string().min(10, "Learning objectives must be at least 10 characters"),
+  phase: z.enum(phases),
   slug: z.string(),
 });
 
@@ -63,25 +82,136 @@ type CourseFormValues = z.infer<typeof courseSchema>;
 
 interface Course extends CourseFormValues {
   id: string;
-  status: "draft" | "active";
-  video_url?: string;
+  status: "draft" | "published";
+  order: number;
 }
+
+interface ContentCounts {
+  video: number;
+  text: number;
+  quiz: number;
+  lab: number;
+}
+
+const SortableCourseCard = ({ course, onEdit, onDelete, onStatusToggle, contentCounts }: {
+  course: Course;
+  onEdit: (course: Course) => void;
+  onDelete: (courseId: string) => void;
+  onStatusToggle: (courseId: string, currentStatus: 'draft' | 'published') => Promise<void>;
+  contentCounts: Record<string, ContentCounts>;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: course.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const navigate = useNavigate();
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card className="mb-4">
+        <CardHeader className="relative">
+          <div className="absolute left-2 top-1/2 -translate-y-1/2 cursor-move" {...attributes} {...listeners}>
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="ml-8">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg font-medium">{course.name}</CardTitle>
+              <Badge variant={course.status === 'published' ? 'default' : 'secondary'} className={course.status === 'published' ? 'bg-[#00C896] hover:bg-[#00C896]/90' : ''}>
+                {course.status === 'published' ? 'Published' : 'Draft'}
+              </Badge>
+            </div>
+            <div className="flex gap-2 mt-2">
+              {contentCounts[course.id] && Object.entries(contentCounts[course.id] as ContentCounts).map(([type, count]) => (
+                count > 0 && (
+                  <Badge key={type} variant="outline" className="capitalize hover:bg-[#00C896]/10 hover:text-[#00C896] hover:border-[#00C896]">
+                    {count} {type === 'text' ? 'Written' : type}{count !== 1 ? 's' : ''}
+                  </Badge>
+                )
+              ))}
+            </div>
+            <CardDescription className="mt-1.5 prose prose-sm max-w-none dark:prose-invert">
+              <ReactMarkdown>{course.learning_objectives}</ReactMarkdown>
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEdit(course)}
+              className="hover:bg-[#00C896]/10 hover:text-[#00C896] hover:border-[#00C896]"
+            >
+              <Edit2 className="h-4 w-4 mr-1" />
+              Edit Details
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/admin/courses/${course.id}/edit`)}
+              className="hover:bg-[#00C896]/10 hover:text-[#00C896] hover:border-[#00C896]"
+            >
+              <FileText className="h-4 w-4 mr-1" />
+              Edit Content
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDelete(course.id)}
+              className="hover:bg-[#00C896]/10 hover:text-[#00C896] hover:border-[#00C896]"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
+            </Button>
+            <Button
+              variant={course.status === 'published' ? 'destructive' : 'default'}
+              size="sm"
+              onClick={() => onStatusToggle(course.id, course.status)}
+              className={course.status === 'published' 
+                ? "bg-red-500 hover:bg-red-500/90 text-white"
+                : "bg-[#00C896] hover:bg-[#00C896]/90 text-white"}
+            >
+              {course.status === 'published' ? 'Unpublish' : 'Publish'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 export const AdminCourses = () => {
   const { setExpanded, setIsAdmin } = useSidebar();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [selectedPhase, setSelectedPhase] = useState<typeof phases[number]>(phases[0]);
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'published' | 'draft'>('all');
+  const [contentCounts, setContentCounts] = useState<Record<string, ContentCounts>>({});
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
       name: "",
-      description: "",
-      phase: "المستوى الأول: المبادئ الأساسية",
-      order: 0,
+      learning_objectives: "",
+      phase: selectedPhase,
       slug: ""
     },
   });
@@ -97,11 +227,33 @@ export const AdminCourses = () => {
       const { data, error } = await supabase
         .from('courses')
         .select('*')
-        .order('phase')
         .order('order');
 
       if (error) throw error;
-      setCourses(data || []);
+
+      // Fetch content counts for each course
+      const coursesWithCounts = await Promise.all((data || []).map(async (course) => {
+        const { data: contents } = await supabase
+          .from('contents')
+          .select('type')
+          .eq('course_id', course.id);
+
+        const counts = {
+          video: contents?.filter(c => c.type === 'video').length || 0,
+          text: contents?.filter(c => c.type === 'text').length || 0,
+          quiz: contents?.filter(c => c.type === 'quiz').length || 0,
+          lab: contents?.filter(c => c.type === 'lab').length || 0,
+        };
+
+        setContentCounts(prev => ({
+          ...prev,
+          [course.id]: counts
+        }));
+
+        return course;
+      }));
+
+      setCourses(coursesWithCounts || []);
     } catch (error) {
       console.error('Error fetching courses:', error);
       toast.error('Failed to fetch courses');
@@ -110,9 +262,40 @@ export const AdminCourses = () => {
     }
   };
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = courses.findIndex((course) => course.id === active.id);
+    const newIndex = courses.findIndex((course) => course.id === over.id);
+    
+    const reorderedCourses = arrayMove(courses, oldIndex, newIndex);
+    setCourses(reorderedCourses);
+
+    // Update orders in database
+    try {
+      const updates = reorderedCourses.map((course, index) => ({
+        id: course.id,
+        order: index
+      }));
+
+      const { error } = await supabase
+        .from('courses')
+        .upsert(updates);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating course orders:', error);
+      toast.error('Failed to save course order');
+      fetchCourses(); // Revert to original order
+    }
+  };
+
   const handleVideoUpload = async (courseId: string, file: File) => {
     try {
-      setUploading(true);
       const fileExt = file.name.split('.').pop();
       const filePath = `${courseId}/intro-video.${fileExt}`;
 
@@ -136,19 +319,16 @@ export const AdminCourses = () => {
     } catch (error) {
       console.error('Error uploading video:', error);
       toast.error('Failed to upload video');
-    } finally {
-      setUploading(false);
     }
   };
 
   const onSubmit = async (values: CourseFormValues) => {
     try {
-      // Generate slug from name
       const slug = slugify(values.name);
       const dataWithSlug = { ...values, slug };
 
-      if (isEditing && selectedCourse) {
-        const { data, error } = await supabase
+      if (selectedCourse) {
+        const { error } = await supabase
           .from('courses')
           .update(dataWithSlug)
           .eq('id', selectedCourse.id);
@@ -159,9 +339,21 @@ export const AdminCourses = () => {
           return;
         }
       } else {
-        const { data, error } = await supabase
+        // Get the highest order number for the selected phase
+        const { data: existingCourses } = await supabase
           .from('courses')
-          .insert([{ ...dataWithSlug, status: 'draft' }])
+          .select('order')
+          .eq('phase', values.phase)
+          .order('order', { ascending: false })
+          .limit(1);
+
+        const newOrder = existingCourses && existingCourses.length > 0 
+          ? (existingCourses[0].order + 1) 
+          : 0;
+
+        const { error } = await supabase
+          .from('courses')
+          .insert([{ ...dataWithSlug, status: 'draft', order: newOrder }])
           .select();
 
         if (error) {
@@ -172,10 +364,9 @@ export const AdminCourses = () => {
       }
 
       form.reset();
-      setIsEditing(false);
       setSelectedCourse(null);
       fetchCourses();
-      toast.success(isEditing ? 'Course updated successfully' : 'Course created successfully');
+      toast.success(selectedCourse ? 'Course updated successfully' : 'Course created successfully');
     } catch (error) {
       console.error('Unexpected error saving course:', error);
       toast.error('An unexpected error occurred while saving the course');
@@ -184,14 +375,24 @@ export const AdminCourses = () => {
 
   const handleEdit = (course: Course) => {
     setSelectedCourse(course);
-    setIsEditing(true);
     form.reset({
       name: course.name,
-      description: course.description,
+      learning_objectives: course.learning_objectives,
       phase: course.phase,
-      order: course.order,
       slug: course.slug,
     });
+    setDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setSelectedCourse(null);
+    form.reset({
+      name: "",
+      learning_objectives: "",
+      phase: selectedPhase,
+      slug: ""
+    });
+    setDialogOpen(false);
   };
 
   const handleDelete = async (courseId: string) => {
@@ -212,22 +413,26 @@ export const AdminCourses = () => {
     }
   };
 
-  const handleStatusToggle = async (courseId: string, currentStatus: 'draft' | 'active') => {
+  const handleStatusToggle = async (courseId: string, currentStatus: 'draft' | 'published') => {
     try {
-      const newStatus = currentStatus === 'draft' ? 'active' : 'draft';
+      const newStatus = currentStatus === 'draft' ? 'published' : 'draft';
       const { error } = await supabase
         .from('courses')
         .update({ status: newStatus })
         .eq('id', courseId);
 
       if (error) throw error;
-      toast.success(`Course ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
+      toast.success(`Course ${newStatus === 'published' ? 'published' : 'unpublished'} successfully`);
       fetchCourses();
     } catch (error) {
       console.error('Error updating course status:', error);
       toast.error('Failed to update course status');
     }
   };
+
+  const filteredCourses = courses
+    .filter(course => course.phase === selectedPhase)
+    .filter(course => selectedStatus === 'all' || course.status === selectedStatus);
 
   return (
     <div className="min-h-screen flex">
@@ -246,23 +451,34 @@ export const AdminCourses = () => {
                 </p>
               </div>
               
-              <Dialog>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button onClick={() => {
+                    setSelectedCourse(null);
+                    form.reset({
+                      name: "",
+                      learning_objectives: "",
+                      phase: selectedPhase,
+                      slug: ""
+                    });
+                  }}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add New Course
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent onInteractOutside={handleDialogClose}>
                   <DialogHeader>
-                    <DialogTitle>{isEditing ? 'Edit Course' : 'Create New Course'}</DialogTitle>
+                    <DialogTitle>{selectedCourse ? 'Edit Course' : 'Create New Course'}</DialogTitle>
                     <DialogDescription>
                       Fill in the course details below
                     </DialogDescription>
                   </DialogHeader>
                   
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(async (values) => {
+                      await onSubmit(values);
+                      setDialogOpen(false);
+                    })} className="space-y-4">
                       <FormField
                         control={form.control}
                         name="name"
@@ -279,277 +495,142 @@ export const AdminCourses = () => {
                       
                       <FormField
                         control={form.control}
-                        name="description"
+                        name="learning_objectives"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Description</FormLabel>
+                            <FormLabel>What you'll learn</FormLabel>
                             <FormControl>
-                              <Textarea {...field} />
+                              <MarkdownEditor {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                       
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="phase"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Phase</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select phase" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="المستوى الأول: المبادئ الأساسية">Level 1: Fundamentals</SelectItem>
-                                  <SelectItem value="المستوى الثاني: المواضيع المتوسطة">Level 2: Intermediate</SelectItem>
-                                  <SelectItem value="المستوى الثالث: المواضيع المتقدمة">Level 3: Advanced</SelectItem>
-                                  <SelectItem value="الامتحان النهائي والشهادة">Final Exam</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="order"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Display Order</FormLabel>
+                      <FormField
+                        control={form.control}
+                        name="phase"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phase</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
                               <FormControl>
-                                <Input 
-                                  type="number" 
-                                  {...field}
-                                  value={field.value || 0}
-                                  onChange={(e) => {
-                                    const value = e.target.value === '' ? 0 : parseInt(e.target.value);
-                                    field.onChange(isNaN(value) ? 0 : value);
-                                  }}
-                                />
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select phase" />
+                                </SelectTrigger>
                               </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                              <SelectContent>
+                                <SelectItem value="المستوى الأول: المبادئ الأساسية">Level 1: Fundamentals</SelectItem>
+                                <SelectItem value="المستوى الثاني: المواضيع المتوسطة">Level 2: Intermediate</SelectItem>
+                                <SelectItem value="المستوى الثالث: المواضيع المتقدمة">Level 3: Advanced</SelectItem>
+                                <SelectItem value="الامتحان النهائي والشهادة">Final Exam</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       
                       <Button type="submit" className="w-full">
-                        {isEditing ? 'Update Course' : 'Create Course'}
+                        {selectedCourse ? 'Update Course' : 'Create Course'}
                       </Button>
                     </form>
                   </Form>
                 </DialogContent>
               </Dialog>
             </div>
+
+            <div className="mb-6 space-y-4">
+              <div className="flex space-x-2">
+                {phases.map((phase) => (
+                  <Button
+                    key={phase}
+                    variant={selectedPhase === phase ? "default" : "outline"}
+                    onClick={() => setSelectedPhase(phase)}
+                    className={`flex-1 ${
+                      selectedPhase === phase 
+                        ? "bg-[#00C896] hover:bg-[#00C896]/90 text-white border-[#00C896]" 
+                        : "hover:bg-[#00C896]/10 hover:text-[#00C896] hover:border-[#00C896]"
+                    }`}
+                  >
+                    {phase === "المستوى الأول: المبادئ الأساسية" && "Level 1: Fundamentals"}
+                    {phase === "المستوى الثاني: المواضيع المتوسطة" && "Level 2: Intermediate"}
+                    {phase === "المستوى الثالث: المواضيع المتقدمة" && "Level 3: Advanced"}
+                    {phase === "الامتحان النهائي والشهادة" && "Final Exam"}
+                  </Button>
+                ))}
+              </div>
+
+              <div className="flex space-x-2">
+                <Button
+                  variant={selectedStatus === 'all' ? "default" : "outline"}
+                  onClick={() => setSelectedStatus('all')}
+                  className={`${
+                    selectedStatus === 'all'
+                      ? "bg-[#00C896] hover:bg-[#00C896]/90 text-white border-[#00C896]"
+                      : "hover:bg-[#00C896]/10 hover:text-[#00C896] hover:border-[#00C896]"
+                  }`}
+                >
+                  All Courses
+                </Button>
+                <Button
+                  variant={selectedStatus === 'published' ? "default" : "outline"}
+                  onClick={() => setSelectedStatus('published')}
+                  className={`${
+                    selectedStatus === 'published'
+                      ? "bg-[#00C896] hover:bg-[#00C896]/90 text-white border-[#00C896]"
+                      : "hover:bg-[#00C896]/10 hover:text-[#00C896] hover:border-[#00C896]"
+                  }`}
+                >
+                  Published
+                </Button>
+                <Button
+                  variant={selectedStatus === 'draft' ? "default" : "outline"}
+                  onClick={() => setSelectedStatus('draft')}
+                  className={`${
+                    selectedStatus === 'draft'
+                      ? "bg-[#00C896] hover:bg-[#00C896]/90 text-white border-[#00C896]"
+                      : "hover:bg-[#00C896]/10 hover:text-[#00C896] hover:border-[#00C896]"
+                  }`}
+                >
+                  Unpublished
+                </Button>
+              </div>
+            </div>
             
-            <Tabs defaultValue="active" className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="active">Active Courses</TabsTrigger>
-                <TabsTrigger value="draft">Draft Courses</TabsTrigger>
-              </TabsList>
-              
-              {loading ? (
-                <div className="flex items-center justify-center h-64">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              ) : (
-                <>
-                  <TabsContent value="active">
-                    <div className="grid gap-6">
-                      {[
-                        "المستوى الأول: المبادئ الأساسية",
-                        "المستوى الثاني: المواضيع المتوسطة",
-                        "المستوى الثالث: المواضيع المتقدمة",
-                        "الامتحان النهائي والشهادة"
-                      ].map((phase) => {
-                        const phaseCourses = courses.filter(
-                          course => course.status === 'active' && course.phase === phase
-                        );
-                        
-                        if (phaseCourses.length === 0) return null;
-                        
-                        return (
-                          <div key={phase}>
-                            <h2 className="text-lg font-semibold mb-4">
-                              {phase === "المستوى الأول: المبادئ الأساسية" && "Level 1: Fundamentals"}
-                              {phase === "المستوى الثاني: المواضيع المتوسطة" && "Level 2: Intermediate"}
-                              {phase === "المستوى الثالث: المواضيع المتقدمة" && "Level 3: Advanced"}
-                              {phase === "الامتحان النهائي والشهادة" && "Final Exam"}
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                              {phaseCourses.map(course => (
-                                <CourseCard
-                                  key={course.id}
-                                  course={course}
-                                  onEdit={handleEdit}
-                                  onDelete={handleDelete}
-                                  onVideoUpload={handleVideoUpload}
-                                  onStatusToggle={handleStatusToggle}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="draft">
-                    <div className="grid gap-6">
-                      {[
-                        "المستوى الأول: المبادئ الأساسية",
-                        "المستوى الثاني: المواضيع المتوسطة",
-                        "المستوى الثالث: المواضيع المتقدمة",
-                        "الامتحان النهائي والشهادة"
-                      ].map((phase) => {
-                        const phaseCourses = courses.filter(
-                          course => course.status === 'draft' && course.phase === phase
-                        );
-                        
-                        if (phaseCourses.length === 0) return null;
-                        
-                        return (
-                          <div key={phase}>
-                            <h2 className="text-lg font-semibold mb-4">
-                              {phase === "المستوى الأول: المبادئ الأساسية" && "Level 1: Fundamentals"}
-                              {phase === "المستوى الثاني: المواضيع المتوسطة" && "Level 2: Intermediate"}
-                              {phase === "المستوى الثالث: المواضيع المتقدمة" && "Level 3: Advanced"}
-                              {phase === "الامتحان النهائي والشهادة" && "Final Exam"}
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                              {phaseCourses.map(course => (
-                                <CourseCard
-                                  key={course.id}
-                                  course={course}
-                                  onEdit={handleEdit}
-                                  onDelete={handleDelete}
-                                  onVideoUpload={handleVideoUpload}
-                                  onStatusToggle={handleStatusToggle}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </TabsContent>
-                </>
-              )}
-            </Tabs>
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={filteredCourses.map(course => course.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {filteredCourses.map((course) => (
+                    <SortableCourseCard
+                      key={course.id}
+                      course={course}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onStatusToggle={handleStatusToggle}
+                      contentCounts={contentCounts}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            )}
           </div>
         </main>
       </div>
     </div>
-  );
-};
-
-const CourseCard = ({
-  course,
-  onEdit,
-  onDelete,
-  onVideoUpload,
-  onStatusToggle,
-}: {
-  course: Course;
-  onEdit: (course: Course) => void;
-  onDelete: (courseId: string) => void;
-  onVideoUpload: (courseId: string, file: File) => Promise<void>;
-  onStatusToggle: (courseId: string, currentStatus: 'draft' | 'active') => Promise<void>;
-}) => {
-  const handleVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    await onVideoUpload(course.id, file);
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-lg font-medium">{course.name}</CardTitle>
-              <Badge variant={course.status === 'active' ? 'default' : 'secondary'}>
-                {course.status}
-              </Badge>
-            </div>
-            <CardDescription className="mt-1.5">
-              {course.description}
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-4">
-              <span>📊 Phase {course.phase}</span>
-              <span>🔢 Order: {course.order}</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onEdit(course)}
-            >
-              <Edit2 className="h-4 w-4 mr-1" />
-              Edit
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onDelete(course.id)}
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Delete
-            </Button>
-            <div className="relative">
-              <Input
-                type="file"
-                accept="video/*"
-                onChange={handleVideoChange}
-                className="hidden"
-                id={`video-${course.id}`}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-              >
-                <label htmlFor={`video-${course.id}`}>
-                  <Upload className="h-4 w-4 mr-1" />
-                  Upload Video
-                </label>
-              </Button>
-            </div>
-            <Button
-              variant={course.status === 'active' ? 'destructive' : 'default'}
-              size="sm"
-              onClick={() => onStatusToggle(course.id, course.status)}
-            >
-              {course.status === 'active' ? 'Deactivate' : 'Activate'}
-            </Button>
-          </div>
-          
-          {course.video_url && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-              <Video className="h-4 w-4" />
-              <span>Video uploaded</span>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
   );
 }; 

@@ -5,7 +5,6 @@ import { SidebarProvider } from "./components/Sidebar";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Login } from "./pages/Login";
 import { AdminDashboard } from "./pages/AdminDashboard";
-import { StudentDashboard } from "./pages/StudentDashboard";
 import { Toaster } from "./components/ui/toaster";
 import { Toaster as Sonner } from "./components/ui/sonner";
 import { TooltipProvider } from "./components/ui/tooltip";
@@ -14,8 +13,9 @@ import { Dashboard } from "./pages/Dashboard";
 import { Courses } from "./pages/Courses";
 import { AdminCourses } from "./pages/AdminCourses";
 import { CourseDetails } from "./pages/CourseDetails";
+import CourseEditor from "./pages/CourseEditor";
 import { Profile } from "./pages/Profile";
-import { NotFound } from "./pages/NotFound";
+import NotFound from "./pages/NotFound";
 import { Labs } from "./pages/Labs";
 import { Achievements } from "./pages/Achievements";
 import { Settings } from "./pages/Settings";
@@ -76,6 +76,14 @@ const App = () => {
                       element={
                         <ProtectedRoute isAdmin>
                           <AdminCourses />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/admin/courses/:courseId/edit" 
+                      element={
+                        <ProtectedRoute isAdmin>
+                          <CourseEditor />
                         </ProtectedRoute>
                       } 
                     />
