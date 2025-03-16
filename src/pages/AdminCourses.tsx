@@ -73,17 +73,25 @@ const phases = [
 
 const courseSchema = z.object({
   name: z.string().min(3, "Course name must be at least 3 characters"),
-  learning_objectives: z.string().min(10, "Learning objectives must be at least 10 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
   phase: z.enum(phases),
   slug: z.string(),
+  thumbnail: z.instanceof(File).optional(),
 });
 
 type CourseFormValues = z.infer<typeof courseSchema>;
 
-interface Course extends CourseFormValues {
+interface Course extends z.infer<typeof courseSchema> {
   id: string;
   status: "draft" | "published";
   order: number;
+  thumbnail_url?: string;
+}
+
+interface LevelDescription {
+  phase: string;
+  description: string;
+  learning_objectives: string;
 }
 
 interface ContentCounts {
@@ -138,8 +146,8 @@ const SortableCourseCard = ({ course, onEdit, onDelete, onStatusToggle, contentC
                 )
               ))}
             </div>
-            <CardDescription className="mt-1.5 prose prose-sm max-w-none dark:prose-invert">
-              <ReactMarkdown>{course.learning_objectives}</ReactMarkdown>
+            <CardDescription className="mt-1.5 whitespace-pre-wrap text-muted-foreground">
+              {course.learning_objectives}
             </CardDescription>
           </div>
         </CardHeader>
@@ -198,6 +206,9 @@ export const AdminCourses = () => {
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'published' | 'draft'>('all');
   const [contentCounts, setContentCounts] = useState<Record<string, ContentCounts>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [levelDescriptions, setLevelDescriptions] = useState<LevelDescription[]>([]);
+  const [editingLevel, setEditingLevel] = useState<LevelDescription | null>(null);
+  const [levelDialogOpen, setLevelDialogOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -210,7 +221,7 @@ export const AdminCourses = () => {
     resolver: zodResolver(courseSchema),
     defaultValues: {
       name: "",
-      learning_objectives: "",
+      description: "",
       phase: selectedPhase,
       slug: ""
     },
@@ -220,6 +231,7 @@ export const AdminCourses = () => {
     setExpanded(true);
     setIsAdmin(true);
     fetchCourses();
+    fetchLevelDescriptions();
   }, [setExpanded, setIsAdmin]);
 
   const fetchCourses = async () => {
@@ -259,6 +271,21 @@ export const AdminCourses = () => {
       toast.error('Failed to fetch courses');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchLevelDescriptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('level_descriptions')
+        .select('*')
+        .order('phase');
+
+      if (error) throw error;
+      setLevelDescriptions(data || []);
+    } catch (error) {
+      console.error('Error fetching level descriptions:', error);
+      toast.error('Failed to fetch level descriptions');
     }
   };
 
@@ -326,11 +353,57 @@ export const AdminCourses = () => {
     try {
       const slug = slugify(values.name);
       const dataWithSlug = { ...values, slug };
+      let thumbnail_url = undefined;
+
+      // Handle thumbnail upload if provided
+      if (values.thumbnail) {
+        try {
+          const fileExt = values.thumbnail.name.split('.').pop();
+          const filePath = `${slug}/thumbnail.${fileExt}`;
+
+          // First, try to remove any existing file with the same name
+          try {
+            await supabase.storage
+              .from('course-thumbnails')
+              .remove([filePath]);
+          } catch (error) {
+            // Ignore deletion errors as the file might not exist
+            console.log('No existing thumbnail to delete');
+          }
+
+          // Upload the new thumbnail
+          const { error: uploadError, data: uploadData } = await supabase.storage
+            .from('course-thumbnails')
+            .upload(filePath, values.thumbnail, {
+              cacheControl: '3600',
+              upsert: true
+            });
+
+          if (uploadError) {
+            console.error('Error uploading thumbnail:', uploadError);
+            throw new Error(`Failed to upload thumbnail: ${uploadError.message}`);
+          }
+
+          // Get the public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('course-thumbnails')
+            .getPublicUrl(filePath);
+
+          thumbnail_url = publicUrl;
+        } catch (uploadError: any) {
+          console.error('Error handling thumbnail:', uploadError);
+          toast.error(`Thumbnail upload failed: ${uploadError.message}`);
+          return;
+        }
+      }
 
       if (selectedCourse) {
         const { error } = await supabase
           .from('courses')
-          .update(dataWithSlug)
+          .update({ 
+            ...dataWithSlug, 
+            thumbnail_url: thumbnail_url || selectedCourse.thumbnail_url 
+          })
           .eq('id', selectedCourse.id);
 
         if (error) {
@@ -353,7 +426,12 @@ export const AdminCourses = () => {
 
         const { error } = await supabase
           .from('courses')
-          .insert([{ ...dataWithSlug, status: 'draft', order: newOrder }])
+          .insert([{ 
+            ...dataWithSlug, 
+            status: 'draft', 
+            order: newOrder,
+            thumbnail_url 
+          }])
           .select();
 
         if (error) {
@@ -367,9 +445,9 @@ export const AdminCourses = () => {
       setSelectedCourse(null);
       fetchCourses();
       toast.success(selectedCourse ? 'Course updated successfully' : 'Course created successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Unexpected error saving course:', error);
-      toast.error('An unexpected error occurred while saving the course');
+      toast.error(`An unexpected error occurred: ${error.message}`);
     }
   };
 
@@ -377,7 +455,7 @@ export const AdminCourses = () => {
     setSelectedCourse(course);
     form.reset({
       name: course.name,
-      learning_objectives: course.learning_objectives,
+      description: course.description,
       phase: course.phase,
       slug: course.slug,
     });
@@ -388,7 +466,7 @@ export const AdminCourses = () => {
     setSelectedCourse(null);
     form.reset({
       name: "",
-      learning_objectives: "",
+      description: "",
       phase: selectedPhase,
       slug: ""
     });
@@ -430,6 +508,32 @@ export const AdminCourses = () => {
     }
   };
 
+  const handleLevelEdit = (level: LevelDescription) => {
+    setEditingLevel(level);
+    setLevelDialogOpen(true);
+  };
+
+  const handleLevelUpdate = async (values: LevelDescription) => {
+    try {
+      const { error } = await supabase
+        .from('level_descriptions')
+        .update({
+          description: values.description,
+          learning_objectives: values.learning_objectives
+        })
+        .eq('phase', values.phase);
+
+      if (error) throw error;
+      toast.success('Level description updated successfully');
+      fetchLevelDescriptions();
+      setLevelDialogOpen(false);
+      setEditingLevel(null);
+    } catch (error) {
+      console.error('Error updating level description:', error);
+      toast.error('Failed to update level description');
+    }
+  };
+
   const filteredCourses = courses
     .filter(course => course.phase === selectedPhase)
     .filter(course => selectedStatus === 'all' || course.status === selectedStatus);
@@ -451,96 +555,176 @@ export const AdminCourses = () => {
                 </p>
               </div>
               
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => {
-                    setSelectedCourse(null);
-                    form.reset({
-                      name: "",
-                      learning_objectives: "",
-                      phase: selectedPhase,
-                      slug: ""
-                    });
-                  }}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New Course
-                  </Button>
-                </DialogTrigger>
-                <DialogContent onInteractOutside={handleDialogClose}>
-                  <DialogHeader>
-                    <DialogTitle>{selectedCourse ? 'Edit Course' : 'Create New Course'}</DialogTitle>
-                    <DialogDescription>
-                      Fill in the course details below
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(async (values) => {
-                      await onSubmit(values);
-                      setDialogOpen(false);
-                    })} className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Course Name</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="learning_objectives"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>What you'll learn</FormLabel>
-                            <FormControl>
-                              <MarkdownEditor {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="phase"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phase</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
+              <div className="flex gap-2">
+                <Dialog open={levelDialogOpen} onOpenChange={setLevelDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Edit Level Descriptions
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
+                      <DialogTitle>Edit Level Descriptions</DialogTitle>
+                      <DialogDescription>
+                        Manage descriptions and learning objectives for each level
+                      </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-6">
+                      {levelDescriptions.map((level) => (
+                        <Card key={level.phase}>
+                          <CardHeader>
+                            <CardTitle>{level.phase}</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-4">
+                              <div>
+                                <h4 className="font-medium mb-2">Description</h4>
+                                <p className="text-sm text-muted-foreground">{level.description}</p>
+                              </div>
+                              <div>
+                                <h4 className="font-medium mb-2">Learning Objectives</h4>
+                                <div className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                  {level.learning_objectives}
+                                </div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleLevelEdit(level)}
+                              >
+                                <Edit2 className="h-4 w-4 mr-2" />
+                                Edit
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add New Course
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-h-[90vh] overflow-y-auto">
+                    <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
+                      <DialogTitle>{selectedCourse ? 'Edit Course' : 'Create New Course'}</DialogTitle>
+                      <DialogDescription>
+                        Fill in the course details below
+                      </DialogDescription>
+                    </DialogHeader>
+                    
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Course Name</FormLabel>
                               <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select phase" />
-                                </SelectTrigger>
+                                <Input {...field} />
                               </FormControl>
-                              <SelectContent>
-                                <SelectItem value="المستوى الأول: المبادئ الأساسية">Level 1: Fundamentals</SelectItem>
-                                <SelectItem value="المستوى الثاني: المواضيع المتوسطة">Level 2: Intermediate</SelectItem>
-                                <SelectItem value="المستوى الثالث: المواضيع المتقدمة">Level 3: Advanced</SelectItem>
-                                <SelectItem value="الامتحان النهائي والشهادة">Final Exam</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <Button type="submit" className="w-full">
-                        {selectedCourse ? 'Update Course' : 'Create Course'}
-                      </Button>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Course Description</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  {...field} 
+                                  placeholder="Enter a brief description of the course..."
+                                  className="min-h-[100px] resize-y"
+                                  dir="rtl"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="phase"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Phase</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select phase" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="المستوى الأول: المبادئ الأساسية">Level 1: Fundamentals</SelectItem>
+                                  <SelectItem value="المستوى الثاني: المواضيع المتوسطة">Level 2: Intermediate</SelectItem>
+                                  <SelectItem value="المستوى الثالث: المواضيع المتقدمة">Level 3: Advanced</SelectItem>
+                                  <SelectItem value="الامتحان النهائي والشهادة">Final Exam</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="thumbnail"
+                          render={({ field: { value, onChange, ...field } }) => (
+                            <FormItem>
+                              <FormLabel>Course Thumbnail</FormLabel>
+                              <FormControl>
+                                <div className="space-y-2">
+                                  {selectedCourse?.thumbnail_url && (
+                                    <div className="relative w-full h-48 overflow-hidden rounded-lg">
+                                      <img 
+                                        src={selectedCourse.thumbnail_url} 
+                                        alt="Current thumbnail"
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                  )}
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        onChange(file);
+                                      }
+                                    }}
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <Button type="submit" className="w-full">
+                          {selectedCourse ? 'Update Course' : 'Create Course'}
+                        </Button>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
 
             <div className="mb-6 space-y-4">

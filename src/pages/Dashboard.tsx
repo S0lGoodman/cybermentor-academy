@@ -57,7 +57,13 @@ const recommendedCourses = [
     image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=300&h=300",
     progress: 25,
     level: "Intermediate" as const,
-    duration: "8 أسابيع"
+    duration: "8 أسابيع",
+    contentCounts: {
+      video: 12,
+      text: 8,
+      quiz: 4,
+      lab: 3
+    }
   },
   {
     id: "2",
@@ -67,7 +73,13 @@ const recommendedCourses = [
     progress: 0,
     level: "Advanced" as const,
     duration: "12 أسبوع",
-    locked: true
+    locked: true,
+    contentCounts: {
+      video: 15,
+      text: 10,
+      quiz: 6,
+      lab: 5
+    }
   },
   {
     id: "3",
@@ -76,7 +88,13 @@ const recommendedCourses = [
     image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=300&h=300",
     progress: 0,
     level: "Beginner" as const,
-    duration: "6 أسابيع"
+    duration: "6 أسابيع",
+    contentCounts: {
+      video: 8,
+      text: 6,
+      quiz: 3,
+      lab: 2
+    }
   }
 ];
 
@@ -276,18 +294,32 @@ export const Dashboard = () => {
             
             {/* Recommended Courses */}
             <div className="mb-8 animate-on-scroll">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold">دوراتي</h2>
-                <Button variant="ghost" size="sm" asChild className="hover:bg-[#00C896]/10 hover:text-[#00C896] transition-colors">
-                  <Link to="/student/courses">
-                    عرض جميع الدورات <ChevronLeft className="h-4 w-4 mr-1" />
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">الدورات الموصى بها</h2>
+                <Button variant="link" asChild>
+                  <Link to="/student/courses" className="text-[#00C896] hover:text-[#00C896]/80">
+                    عرض الكل
+                    <ChevronLeft className="h-4 w-4 mr-1" />
                   </Link>
                 </Button>
               </div>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {recommendedCourses.map((course) => (
-                  <CourseCard key={course.id} {...course} />
+                  <div key={course.id} className="h-full">
+                    <CourseCard
+                      id={course.id}
+                      title={course.title}
+                      description={course.description}
+                      progress={course.progress}
+                      level={course.level}
+                      duration={course.duration}
+                      locked={course.locked || false}
+                      phaseId="المستوى الأول: المبادئ الأساسية"
+                      slug={course.id}
+                      contentCounts={course.contentCounts}
+                      thumbnailUrl={course.image}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
