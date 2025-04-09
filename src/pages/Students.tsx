@@ -41,7 +41,7 @@ export default function Students() {
   const fetchStudents = async () => {
     try {
       setIsLoading(true);
-      
+
       // Get all student profiles
       const { data: profiles, error: profilesError } = await supabaseAdmin
         .from('profiles')
@@ -53,7 +53,7 @@ export default function Students() {
 
       // Get all users from auth.users
       const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
-      
+
       if (usersError) throw usersError;
 
       // Create a map of auth users for quick lookup
@@ -65,7 +65,7 @@ export default function Students() {
       // Transform and update data
       const transformedData = await Promise.all(profiles.map(async (profile) => {
         const authUser = authUsers.get(profile.id);
-        
+
         // Check if user has confirmed email and signed in
         if (profile.status === 'invited' && authUser?.confirmed_at && authUser?.last_sign_in_at) {
           // Update status to active
@@ -73,7 +73,7 @@ export default function Students() {
             .from('profiles')
             .update({ status: 'active' })
             .eq('id', profile.id);
-          
+
           if (!updateError) {
             profile.status = 'active';
           }
@@ -132,7 +132,7 @@ export default function Students() {
               .from('profiles')
               .delete()
               .eq('id', studentId);
-            
+
             if (profileDeleteError) throw profileDeleteError;
 
             // Then delete from auth.users
@@ -143,7 +143,7 @@ export default function Students() {
               title: "Student Deleted",
               description: `${student.full_name}'s account has been permanently deleted.`
             });
-            
+
             // Force refresh the students list
             await fetchStudents();
           } catch (deleteError: any) {
@@ -164,7 +164,7 @@ export default function Students() {
               suspension_reason: metadata.reason
             })
             .eq('id', studentId);
-          
+
           if (suspendError) throw suspendError;
 
           toast({
@@ -182,7 +182,7 @@ export default function Students() {
               suspension_reason: null
             })
             .eq('id', studentId);
-          
+
           if (activateError) throw activateError;
 
           toast({
@@ -211,7 +211,7 @@ export default function Students() {
           }
           const updates: any = {};
           if (metadata.name) updates.name = metadata.name;
-          
+
           if (metadata.email) {
             // Update email in auth.users first
             const { error: emailError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -228,7 +228,7 @@ export default function Students() {
               .from('profiles')
               .update(updates)
               .eq('id', studentId);
-            
+
             if (updateError) throw updateError;
           }
 
@@ -301,7 +301,7 @@ export default function Students() {
     <div className="min-h-screen flex bg-background">
       <AdminNavbar />
       <div className={cn("flex-1", !expanded && "overflow-hidden")}>
-        <Navbar title="Students" />
+        <Navbar title="" />
         <main className="p-6">
           <div className={cn("max-w-7xl mx-auto", !expanded && "mr-16")}>
             <div className="flex justify-between items-center mb-6">
@@ -427,4 +427,4 @@ export default function Students() {
       </div>
     </div>
   );
-} 
+}

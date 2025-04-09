@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { 
-  Home, BookOpen, Award, User, Settings, ChevronLeft, Menu, 
+import {
+  Home, BookOpen, Award, User, Settings, ChevronLeft, Menu,
   Shield, Users, FileText, BarChart, Layers, Bell, GraduationCap, LogOut, X, FlaskConical, Trophy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,7 @@ interface NavItemProps {
 const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href, active, onClick }) => {
   const { expanded } = useSidebar();
   const location = useLocation();
-  
+
   // Check if the current path starts with the href (for nested routes)
   const isActive = active || location.pathname.startsWith(href);
 
@@ -60,8 +60,8 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href, active, onCl
       className={cn(
         "flex items-center gap-4 transition-all duration-300 group relative",
         expanded ? "px-3 py-2" : "p-3 justify-center",
-        isActive 
-          ? "bg-gradient-to-r from-teal-500/20 to-lime-500/20 text-teal-500 font-medium dark:from-teal-500/10 dark:to-lime-500/10" 
+        isActive
+          ? "bg-gradient-to-r from-teal-500/20 to-lime-500/20 text-teal-500 font-medium dark:from-teal-500/10 dark:to-lime-500/10"
           : "text-muted-foreground hover:bg-gradient-to-r hover:from-teal-500/10 hover:to-lime-500/10 hover:text-teal-500"
       )}
       onClick={onClick}
@@ -83,20 +83,41 @@ export const AdminNavbar: React.FC = () => {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isAdmin = location.pathname.includes("/admin");
 
-  // Force collapsed state on mount for admin panel
+  // Initialize sidebar state for admin panel
   useEffect(() => {
-    if (isAdmin) {
-      setExpanded(false);
+    // Only set initial state when first entering admin section
+    if (isAdmin && location.pathname.includes('/admin')) {
+      const sidebarState = localStorage.getItem('adminSidebarState');
+      if (sidebarState) {
+        // Restore saved state
+        setExpanded(sidebarState === 'expanded');
+      } else {
+        // Default to collapsed on first visit
+        setExpanded(false);
+        localStorage.setItem('adminSidebarState', 'collapsed');
+      }
     }
-  }, [location.pathname]);
+
+    // Clean up when leaving admin section
+    return () => {
+      if (!location.pathname.includes('/admin')) {
+        // Save current state before leaving admin section
+        localStorage.removeItem('adminSidebarState');
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (expanded && 
-          sidebarRef.current && 
+      if (expanded &&
+          sidebarRef.current &&
           !sidebarRef.current.contains(event.target as Node) &&
           !(event.target as Element).closest('button[data-expand-trigger="true"]')) {
         setExpanded(false);
+        // Save sidebar state to localStorage
+        if (isAdmin) {
+          localStorage.setItem('adminSidebarState', 'collapsed');
+        }
       }
     };
 
@@ -130,29 +151,36 @@ export const AdminNavbar: React.FC = () => {
   };
 
   return (
-    <aside 
+    <aside
       ref={sidebarRef}
       className={cn(
         "fixed top-0 z-40 h-screen border-border transition-all duration-300 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
         "dark:bg-muted/10 dark:supports-[backdrop-filter]:bg-background/10",
         expanded ? "w-64" : "w-16",
-        location.pathname.includes("/admin") 
-          ? "left-0 border-r" 
+        location.pathname.includes("/admin")
+          ? "left-0 border-r"
           : "right-0 border-l"
       )}
     >
       <div className="p-4 flex justify-between items-center">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => setExpanded(prev => !prev)}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            const newState = !expanded;
+            setExpanded(newState);
+            // Save sidebar state to localStorage
+            if (isAdmin) {
+              localStorage.setItem('adminSidebarState', newState ? 'expanded' : 'collapsed');
+            }
+          }}
           className={cn("text-teal-500 hover:bg-teal-500/10", !expanded && "hidden")}
         >
           <ChevronLeft className={cn("h-5 w-5 transition-transform rotate-180", !expanded && "rotate-0")} />
         </Button>
         <div className={cn("flex items-center gap-2", expanded ? "" : "justify-center w-full")}>
-          <img 
-            src="/logo.png" 
+          <img
+            src="/logo.png"
             alt="CyberMentor Academy"
             className={cn("object-contain", expanded ? "h-12 w-12" : "h-10 w-10")}
           />
@@ -165,11 +193,17 @@ export const AdminNavbar: React.FC = () => {
       </div>
 
       {!expanded && (
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           data-expand-trigger="true"
-          onClick={() => setExpanded(true)}
+          onClick={() => {
+            setExpanded(true);
+            // Save sidebar state to localStorage
+            if (isAdmin) {
+              localStorage.setItem('adminSidebarState', 'expanded');
+            }
+          }}
           className={cn(
             "absolute top-6 h-8 w-8 rounded-full bg-background border border-border hover:bg-teal-500/10",
             location.pathname.includes("/admin") ? "-right-10" : "-left-10"
@@ -201,9 +235,9 @@ export const AdminNavbar: React.FC = () => {
 
       <div className="mt-auto px-3 pb-5">
         {/* Logout Button */}
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           className={cn(
             "w-full text-red-500 hover:bg-red-500/10 hover:text-red-500 flex items-center rounded-lg",
             expanded ? "px-3 justify-start" : "p-3 justify-center"

@@ -55,152 +55,152 @@ const App = () => {
 
                     {/* Admin Routes */}
                     <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
-                    <Route 
-                      path="/admin/dashboard" 
+                    <Route
+                      path="/admin/dashboard"
                       element={
                         <ProtectedRoute isAdmin>
                           <AdminDashboard />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/admin/students" 
+                    <Route
+                      path="/admin/students"
                       element={
                         <ProtectedRoute isAdmin>
                           <Students />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/admin/courses" 
+                    <Route
+                      path="/admin/courses"
                       element={
                         <ProtectedRoute isAdmin>
                           <AdminCourses />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/admin/courses/:courseId/edit" 
+                    <Route
+                      path="/admin/courses/:courseId/edit"
                       element={
                         <ProtectedRoute isAdmin>
                           <CourseEditor />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/admin/courses/:courseId" 
+                    <Route
+                      path="/admin/courses/:courseId"
                       element={
                         <ProtectedRoute isAdmin>
                           <CourseDetails />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/admin/profile" 
+                    <Route
+                      path="/admin/profile"
                       element={
                         <ProtectedRoute isAdmin>
                           <Profile />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/admin/labs" 
+                    <Route
+                      path="/admin/labs"
                       element={
                         <ProtectedRoute isAdmin>
                           <Labs />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/admin/achievements" 
+                    <Route
+                      path="/admin/achievements"
                       element={
                         <ProtectedRoute isAdmin>
                           <Achievements />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/admin/settings" 
+                    <Route
+                      path="/admin/settings"
                       element={
                         <ProtectedRoute isAdmin>
                           <AdminSettings />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
 
                     {/* Student Routes */}
                     <Route path="/student" element={<Navigate to="/student/dashboard" />} />
-                    <Route 
-                      path="/student/dashboard" 
+                    <Route
+                      path="/student/dashboard"
                       element={
                         <ProtectedRoute>
                           <Dashboard />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/student/courses" 
+                    <Route
+                      path="/student/courses"
                       element={
                         <ProtectedRoute>
                           <Courses />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/student/courses/:phaseId" 
+                    <Route
+                      path="/student/courses/:phaseId"
                       element={
                         <ProtectedRoute>
                           <Courses />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/student/courses/:phaseId/:courseSlug" 
+                    <Route
+                      path="/student/courses/:phaseId/:courseSlug"
                       element={
                         <ProtectedRoute>
                           <CourseDetails />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/student/labs" 
+                    <Route
+                      path="/student/labs"
                       element={
                         <ProtectedRoute>
                           <Labs />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/student/achievements" 
+                    <Route
+                      path="/student/achievements"
                       element={
                         <ProtectedRoute>
                           <Achievements />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/student/leaderboard" 
+                    <Route
+                      path="/student/leaderboard"
                       element={
                         <ProtectedRoute>
                           <Leaderboard />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/student/settings" 
+                    <Route
+                      path="/student/settings"
                       element={
                         <ProtectedRoute>
                           <Settings />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
-                    <Route 
-                      path="/student/profile" 
+                    <Route
+                      path="/student/profile"
                       element={
                         <ProtectedRoute>
                           <Profile />
                         </ProtectedRoute>
-                      } 
+                      }
                     />
 
                     {/* Reset Password Route */}

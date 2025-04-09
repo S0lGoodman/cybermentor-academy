@@ -184,7 +184,7 @@ const SortableCourseCard = ({ course, onEdit, onDelete, onStatusToggle, contentC
               variant={course.status === 'published' ? 'destructive' : 'default'}
               size="sm"
               onClick={() => onStatusToggle(course.id, course.status)}
-              className={course.status === 'published' 
+              className={course.status === 'published'
                 ? "bg-red-500 hover:bg-red-500/90 text-white"
                 : "bg-[#00C896] hover:bg-[#00C896]/90 text-white"}
             >
@@ -228,11 +228,11 @@ export const AdminCourses = () => {
   });
 
   useEffect(() => {
-    setExpanded(true);
+    // Only set isAdmin, don't force sidebar state
     setIsAdmin(true);
     fetchCourses();
     fetchLevelDescriptions();
-  }, [setExpanded, setIsAdmin]);
+  }, [setIsAdmin]);
 
   const fetchCourses = async () => {
     try {
@@ -291,14 +291,14 @@ export const AdminCourses = () => {
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (!over || active.id === over.id) {
       return;
     }
 
     const oldIndex = courses.findIndex((course) => course.id === active.id);
     const newIndex = courses.findIndex((course) => course.id === over.id);
-    
+
     const reorderedCourses = arrayMove(courses, oldIndex, newIndex);
     setCourses(reorderedCourses);
 
@@ -400,9 +400,9 @@ export const AdminCourses = () => {
       if (selectedCourse) {
         const { error } = await supabase
           .from('courses')
-          .update({ 
-            ...dataWithSlug, 
-            thumbnail_url: thumbnail_url || selectedCourse.thumbnail_url 
+          .update({
+            ...dataWithSlug,
+            thumbnail_url: thumbnail_url || selectedCourse.thumbnail_url
           })
           .eq('id', selectedCourse.id);
 
@@ -420,17 +420,17 @@ export const AdminCourses = () => {
           .order('order', { ascending: false })
           .limit(1);
 
-        const newOrder = existingCourses && existingCourses.length > 0 
-          ? (existingCourses[0].order + 1) 
+        const newOrder = existingCourses && existingCourses.length > 0
+          ? (existingCourses[0].order + 1)
           : 0;
 
         const { error } = await supabase
           .from('courses')
-          .insert([{ 
-            ...dataWithSlug, 
-            status: 'draft', 
+          .insert([{
+            ...dataWithSlug,
+            status: 'draft',
             order: newOrder,
-            thumbnail_url 
+            thumbnail_url
           }])
           .select();
 
@@ -541,10 +541,10 @@ export const AdminCourses = () => {
   return (
     <div className="min-h-screen flex">
       <AdminNavbar />
-      
+
       <div className="flex-1">
         <Navbar />
-        
+
         <main className="p-6 ml-16">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-6">
@@ -554,7 +554,7 @@ export const AdminCourses = () => {
                   Create and manage pathway courses
                 </p>
               </div>
-              
+
               <div className="flex gap-2">
                 <Dialog open={levelDialogOpen} onOpenChange={setLevelDialogOpen}>
                   <DialogTrigger asChild>
@@ -570,7 +570,7 @@ export const AdminCourses = () => {
                         Manage descriptions and learning objectives for each level
                       </DialogDescription>
                     </DialogHeader>
-                    
+
                     <div className="space-y-6">
                       {levelDescriptions.map((level) => (
                         <Card key={level.phase}>
@@ -619,7 +619,7 @@ export const AdminCourses = () => {
                         Fill in the course details below
                       </DialogDescription>
                     </DialogHeader>
-                    
+
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <FormField
@@ -635,7 +635,7 @@ export const AdminCourses = () => {
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="description"
@@ -643,8 +643,8 @@ export const AdminCourses = () => {
                             <FormItem>
                               <FormLabel>Course Description</FormLabel>
                               <FormControl>
-                                <Textarea 
-                                  {...field} 
+                                <Textarea
+                                  {...field}
                                   placeholder="Enter a brief description of the course..."
                                   className="min-h-[100px] resize-y"
                                   dir="rtl"
@@ -654,7 +654,7 @@ export const AdminCourses = () => {
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="phase"
@@ -692,8 +692,8 @@ export const AdminCourses = () => {
                                 <div className="space-y-2">
                                   {selectedCourse?.thumbnail_url && (
                                     <div className="relative w-full h-48 overflow-hidden rounded-lg">
-                                      <img 
-                                        src={selectedCourse.thumbnail_url} 
+                                      <img
+                                        src={selectedCourse.thumbnail_url}
                                         alt="Current thumbnail"
                                         className="w-full h-full object-cover"
                                       />
@@ -716,7 +716,7 @@ export const AdminCourses = () => {
                             </FormItem>
                           )}
                         />
-                        
+
                         <Button type="submit" className="w-full">
                           {selectedCourse ? 'Update Course' : 'Create Course'}
                         </Button>
@@ -735,8 +735,8 @@ export const AdminCourses = () => {
                     variant={selectedPhase === phase ? "default" : "outline"}
                     onClick={() => setSelectedPhase(phase)}
                     className={`flex-1 ${
-                      selectedPhase === phase 
-                        ? "bg-[#00C896] hover:bg-[#00C896]/90 text-white border-[#00C896]" 
+                      selectedPhase === phase
+                        ? "bg-[#00C896] hover:bg-[#00C896]/90 text-white border-[#00C896]"
                         : "hover:bg-[#00C896]/10 hover:text-[#00C896] hover:border-[#00C896]"
                     }`}
                   >
@@ -784,7 +784,7 @@ export const AdminCourses = () => {
                 </Button>
               </div>
             </div>
-            
+
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin" />
@@ -817,4 +817,4 @@ export const AdminCourses = () => {
       </div>
     </div>
   );
-}; 
+};

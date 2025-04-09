@@ -18,20 +18,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkSuspension = async () => {
     if (!user) return false;
-    
+
     const { data: profile } = await supabase
       .from('profiles')
       .select('status')
       .eq('id', user.id)
       .single();
-    
+
     if (profile?.status === 'suspended') {
       // Clear auth data and return true to indicate suspension
       localStorage.clear();
       await signOut();
       return true;
     }
-    
+
     return false;
   };
 
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const newUser = session?.user ?? null;
       setUser(newUser)
-      
+
       if (newUser) {
         // Check suspension status whenever auth state changes
         const isSuspended = await checkSuspension();
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(null);
         }
       }
-      
+
       setLoading(false)
     })
 
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     })
     if (error) throw error
-    
+
     // Check suspension immediately after sign in
     const isSuspended = await checkSuspension();
     if (isSuspended) {
@@ -93,4 +93,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider')
   }
   return context
-} 
+}

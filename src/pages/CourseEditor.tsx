@@ -221,7 +221,7 @@ const ContentForm = ({ form, onSubmit, selectedContent }: {
         .getPublicUrl(fileName);
 
       console.log('Public URL:', publicUrl);
-      
+
       form.setValue("content", publicUrl);
       toast.success('Video uploaded successfully');
     } catch (error: any) {
@@ -250,7 +250,7 @@ const ContentForm = ({ form, onSubmit, selectedContent }: {
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="type"
@@ -280,7 +280,7 @@ const ContentForm = ({ form, onSubmit, selectedContent }: {
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="content"
@@ -303,7 +303,7 @@ const ContentForm = ({ form, onSubmit, selectedContent }: {
                             <span>Uploading video... {uploadProgress}%</span>
                           </div>
                           <div className="w-full bg-secondary rounded-full h-2">
-                            <div 
+                            <div
                               className="bg-primary h-2 rounded-full transition-all duration-300"
                               style={{ width: `${uploadProgress}%` }}
                             />
@@ -349,7 +349,7 @@ const ContentForm = ({ form, onSubmit, selectedContent }: {
               </FormItem>
             )}
           />
-          
+
           <Button type="submit" className="w-full" disabled={isUploading}>
             {selectedContent ? 'Update Content' : 'Add Content'}
           </Button>
@@ -422,10 +422,10 @@ const CourseEditor = () => {
   });
 
   useEffect(() => {
-    setExpanded(true);
+    // Only set isAdmin, don't force sidebar state
     setIsAdmin(true);
     fetchCourseData();
-  }, [setExpanded, setIsAdmin]);
+  }, [setIsAdmin]);
 
   const fetchCourseData = async () => {
     try {
@@ -458,7 +458,7 @@ const CourseEditor = () => {
 
   const handleContentDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (!over || active.id === over.id) {
       return;
     }
@@ -536,7 +536,7 @@ const CourseEditor = () => {
 
       if (error) throw error;
 
-      setContents(contents.map(c => 
+      setContents(contents.map(c =>
         c.id === selectedContent.id ? { ...c, ...values } : c
       ));
       contentForm.reset();
@@ -598,10 +598,10 @@ const CourseEditor = () => {
   return (
     <div className="min-h-screen flex">
       <AdminNavbar />
-      
+
       <div className="flex-1">
         <Navbar />
-        
+
         <main className="p-6 ml-16">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-6">
@@ -625,9 +625,9 @@ const CourseEditor = () => {
                           .from('courses')
                           .update({ status: newStatus })
                           .eq('id', courseId);
-                        
+
                         if (error) throw error;
-                        
+
                         setCourse({ ...course, status: newStatus });
                         toast.success(`Course ${newStatus === 'published' ? 'published' : 'unpublished'} successfully`);
                       } catch (error) {
@@ -652,7 +652,7 @@ const CourseEditor = () => {
                   Edit course content
                 </p>
               </div>
-              
+
               <Dialog open={isContentDialogOpen} onOpenChange={setIsContentDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
@@ -669,7 +669,7 @@ const CourseEditor = () => {
                       Fill in the content details below
                     </DialogDescription>
                   </DialogHeader>
-                  
+
                   <div className="flex-1 min-h-0 overflow-y-auto">
                     <ContentForm
                       form={contentForm}
@@ -680,7 +680,7 @@ const CourseEditor = () => {
                 </DialogContent>
               </Dialog>
             </div>
-            
+
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -713,4 +713,4 @@ const CourseEditor = () => {
   );
 };
 
-export default CourseEditor; 
+export default CourseEditor;

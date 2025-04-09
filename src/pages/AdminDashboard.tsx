@@ -45,38 +45,38 @@ const mockStudents = [
 
 // Initial course data
 const initialCourses = [
-  { 
+  {
     id: "1",
-    name: "Ethical Hacking & Penetration Testing", 
-    rating: 4.9, 
+    name: "Ethical Hacking & Penetration Testing",
+    rating: 4.9,
     activeStudents: 84,
     completedStudents: 40
   },
-  { 
+  {
     id: "2",
-    name: "Network Security Fundamentals", 
-    rating: 4.7, 
+    name: "Network Security Fundamentals",
+    rating: 4.7,
     activeStudents: 68,
     completedStudents: 30
   },
-  { 
+  {
     id: "3",
-    name: "Secure Coding & Application Security", 
-    rating: 4.6, 
+    name: "Secure Coding & Application Security",
+    rating: 4.6,
     activeStudents: 56,
     completedStudents: 20
   },
-  { 
+  {
     id: "4",
-    name: "Cyber Threat Intelligence", 
-    rating: 4.8, 
+    name: "Cyber Threat Intelligence",
+    rating: 4.8,
     activeStudents: 45,
     completedStudents: 20
   },
-  { 
+  {
     id: "5",
-    name: "Digital Forensics", 
-    rating: 4.5, 
+    name: "Digital Forensics",
+    rating: 4.5,
     activeStudents: 42,
     completedStudents: 15
   },
@@ -105,17 +105,17 @@ export const AdminDashboard = () => {
   const [recentActivity, setRecentActivity] = useState<string | null>(null);
   const [activeUsers, setActiveUsers] = useState<string[]>([]);
   const [courses, setCourses] = useState(initialCourses);
-  
+
   useEffect(() => {
-    setExpanded(true);
+    // Only set isAdmin, don't force sidebar state
     setIsAdmin(true);
-    
+
     // Setup animation observations
     const observerOptions = {
       threshold: 0.1,
       rootMargin: "0px 0px -50px 0px"
     };
-    
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -123,16 +123,16 @@ export const AdminDashboard = () => {
         }
       });
     }, observerOptions);
-    
+
     document.querySelectorAll('.animate-on-scroll').forEach(el => {
       observer.observe(el);
     });
-    
+
     // Simulate real-time updates
     const activityInterval = setInterval(() => {
       const { student, activity } = getRandomActivity();
       setRecentActivity(`${student.name} ${activity}`);
-      
+
       // Update active users
       setActiveUsers(prev => {
         const newActive = [...prev];
@@ -146,7 +146,7 @@ export const AdminDashboard = () => {
         }
         return newActive.slice(-3); // Keep only last 3 active users
       });
-      
+
       // Update course active students
       setCourses(prevCourses => {
         return prevCourses.map(course => {
@@ -161,7 +161,7 @@ export const AdminDashboard = () => {
           return course;
         });
       });
-      
+
       // Random stats updates
       if (Math.random() > 0.8) {
         setTotalEarnings(prev => prev + Math.floor(Math.random() * 500));
@@ -175,11 +175,11 @@ export const AdminDashboard = () => {
       if (Math.random() > 0.7) {
         setPaymentDue(prev => Math.max(0, prev + (Math.random() > 0.5 ? 1 : -1)));
       }
-      
+
       // Clear activity message after 3 seconds
       setTimeout(() => setRecentActivity(null), 3000);
     }, 4000);
-    
+
     return () => {
       observer.disconnect();
       clearInterval(activityInterval);
@@ -194,10 +194,10 @@ export const AdminDashboard = () => {
   return (
     <div className="min-h-screen flex">
       <AdminNavbar />
-      
+
       <div className="flex-1">
         <Navbar />
-        
+
         <main className="p-6 ml-16">
           <div className="max-w-7xl mx-auto">
             {/* Admin Stats Overview */}
@@ -220,7 +220,7 @@ export const AdminDashboard = () => {
                 </div>
               )}
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-on-scroll">
               <StatCard
                 title="Total Earnings"
@@ -247,7 +247,7 @@ export const AdminDashboard = () => {
                 trend={{ value: "-2", label: "vs last week" }}
               />
             </div>
-            
+
             {/* Quick Actions Section */}
             <div className="mb-8 animate-on-scroll">
               <Card>
@@ -272,7 +272,7 @@ export const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
-            
+
             {/* Student Performance & Course Stats */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-on-scroll">
               <Card>
@@ -280,7 +280,7 @@ export const AdminDashboard = () => {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg font-medium">Top Performing Students</CardTitle>
                     <Button variant="outline" size="sm" className="h-8">
-                      <Search className="h-3.5 w-3.5 mr-1" /> 
+                      <Search className="h-3.5 w-3.5 mr-1" />
                       Find Student
                     </Button>
                   </div>
@@ -315,16 +315,16 @@ export const AdminDashboard = () => {
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <span className="font-medium text-sm">{student.score}%</span>
-                              {student.trend === "up" ? 
-                                <ChevronUp className="h-4 w-4 text-green-500" /> : 
+                              {student.trend === "up" ?
+                                <ChevronUp className="h-4 w-4 text-green-500" /> :
                                 <ChevronDown className="h-4 w-4 text-red-500" />
                               }
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="w-full bg-slate-100 rounded-full h-2">
-                              <div 
-                                className="bg-cyber-primary h-2 rounded-full" 
+                              <div
+                                className="bg-cyber-primary h-2 rounded-full"
                                 style={{ width: `${student.completion}%` }}
                               ></div>
                             </div>
@@ -338,7 +338,7 @@ export const AdminDashboard = () => {
                   </Table>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg font-medium">Course Performance</CardTitle>
@@ -377,7 +377,7 @@ export const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
-            
+
             {/* Quick Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-on-scroll">
               <Card className="lg:col-span-2">
@@ -385,7 +385,7 @@ export const AdminDashboard = () => {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg font-medium">Support Tickets</CardTitle>
                     <Button variant="outline" size="sm" className="h-8">
-                      <Search className="h-3.5 w-3.5 mr-1" /> 
+                      <Search className="h-3.5 w-3.5 mr-1" />
                       Search Tickets
                     </Button>
                   </div>
@@ -393,7 +393,7 @@ export const AdminDashboard = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {[
-                      { 
+                      {
                         id: "TK-001",
                         student: "Ahmed Hassan",
                         subject: "Cannot access lab environment",
@@ -401,7 +401,7 @@ export const AdminDashboard = () => {
                         status: "open",
                         time: "30 mins ago"
                       },
-                      { 
+                      {
                         id: "TK-002",
                         student: "Sara Amrani",
                         subject: "Payment issue with monthly subscription",
@@ -409,7 +409,7 @@ export const AdminDashboard = () => {
                         status: "in-progress",
                         time: "2 hours ago"
                       },
-                      { 
+                      {
                         id: "TK-003",
                         student: "Youssef Alami",
                         subject: "Certificate not generated after course completion",
@@ -434,7 +434,7 @@ export const AdminDashboard = () => {
                               ticket.status === "in-progress" ? "secondary" :
                               "default"
                             }>
-                              {ticket.status === "in-progress" ? "In Progress" : 
+                              {ticket.status === "in-progress" ? "In Progress" :
                                ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
                             </Badge>
                           </div>
