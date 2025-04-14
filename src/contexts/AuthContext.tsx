@@ -19,14 +19,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkSuspension = async () => {
     if (!user) return false;
 
+    // EMERGENCY FIX: Check if admin by email domain
+    const isAdminByEmail = user.email?.endsWith('@cybermentor.ma') || false;
+
+    // Admins bypass suspension checks
+    if (isAdminByEmail) {
+      return false;
+    }
+
     const { data: profile } = await supabase
       .from('profiles')
-      .select('status')
+      .select('status, role')
       .eq('id', user.id)
       .single();
 
-    if (profile?.status === 'suspended') {
-      // Clear auth data and return true to indicate suspension
+    // Admins bypass suspension checks
+    if (profile?.role === 'admin') {
+      return false;
+    }
+
+    // Check for both suspended and payment_due statuses
+    if (profile?.status === 'suspended' || profile?.status === 'payment_due') {
+      // Clear auth data and return true to indicate access restriction
       localStorage.clear();
       await signOut();
       return true;
@@ -68,10 +82,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
     if (error) throw error
 
-    // Check suspension immediately after sign in
-    const isSuspended = await checkSuspension();
-    if (isSuspended) {
-      throw new Error("لا يمكنك الوصول إلى الأكاديمية في الوقت الحالي! يرجى الاتصال بالدعم");
+    // Check access restrictions immediately after sign in
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (currentUser) {
+      // EMERGENCY FIX: Check if admin by email domain
+      const isAdminByEmail = currentUser.email?.endsWith('@cybermentor.ma') || false;
+
+      // Get profile data
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('status, role')
+        .eq('id', currentUser.id)
+        .single();
+
+      // EMERGENCY FIX: If admin by email but profile doesn't exist or doesn't have admin role
+      if (isAdminByEmail && (!profile || profile.role !== 'admin')) {
+        // Create or update profile to ensure admin role
+        await supabase
+          .from('profiles')
+          .upsert({
+            id: currentUser.id,
+            email: currentUser.email,
+            role: 'admin',
+            status: 'active',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+      }
+
+      // Only check restrictions for non-admin users
+      if (!isAdminByEmail && profile?.role !== 'admin') {
+        // Check for specific status to provide more detailed error messages
+        if (profile?.status === 'suspended') {
+          await signOut();
+          throw new Error("لا يمكنك الوصول إلى الأكاديمية في الوقت الحالي! يرجى الاتصال بالدعم");
+        }
+
+        if (profile?.status === 'payment_due') {
+          await signOut();
+          throw new Error("لا يمكنك الوصول إلى الأكاديمية بسبب وجود دفعات مستحقة! يرجى تسوية المدفوعات المستحقة");
+        }
+      }
     }
   }
 

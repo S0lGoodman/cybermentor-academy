@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { AdminNavbar } from "../components/Sidebar";
 import { Navbar } from "../components/Navbar";
 import { StatCard } from "../components/StatCard";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import {
@@ -98,13 +99,236 @@ const getRandomActivity = () => {
 
 export const AdminDashboard = () => {
   const { setExpanded, setIsAdmin } = useSidebar();
-  const [totalEarnings, setTotalEarnings] = useState(15000);
-  const [totalStudents, setTotalStudents] = useState(10);
-  const [activeCourses, setActiveCourses] = useState(24);
-  const [paymentDue, setPaymentDue] = useState(12);
+  const [totalEarnings, setTotalEarnings] = useState<number>(0);
+  const [totalStudents, setTotalStudents] = useState<number>(0);
+  const [activeCourses, setActiveCourses] = useState<number>(0);
+  const [paymentDue, setPaymentDue] = useState<number>(0);
   const [recentActivity, setRecentActivity] = useState<string | null>(null);
   const [activeUsers, setActiveUsers] = useState<string[]>([]);
   const [courses, setCourses] = useState(initialCourses);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [earningsTrend, setEarningsTrend] = useState<string>("+0%");
+  const [studentsTrend, setStudentsTrend] = useState<string>("+0");
+  const [coursesTrend, setCoursesTrend] = useState<string>("+0");
+
+  // Function to fetch total students count
+  const fetchTotalStudents = async () => {
+    try {
+      const { data, error, count } = await supabaseAdmin
+        .from('profiles')
+        .select('id', { count: 'exact' })
+        .eq('role', 'student');
+
+      if (error) {
+        console.error('Error fetching total students:', error);
+        return;
+      }
+
+      // Get new students in the last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { count: newStudentsCount, error: newStudentsError } = await supabaseAdmin
+        .from('profiles')
+        .select('id', { count: 'exact' })
+        .eq('role', 'student')
+        .gte('created_at', thirtyDaysAgo.toISOString());
+
+      if (newStudentsError) {
+        console.error('Error fetching new students:', newStudentsError);
+      } else {
+        setStudentsTrend(`+${newStudentsCount || 0}`);
+      }
+
+      setTotalStudents(count || 0);
+    } catch (error) {
+      console.error('Unexpected error fetching total students:', error);
+    }
+  };
+
+  // Function to fetch active courses count
+  const fetchActiveCourses = async () => {
+    try {
+      const { data, error, count } = await supabaseAdmin
+        .from('courses')
+        .select('id', { count: 'exact' })
+        .eq('status', 'published');
+
+      if (error) {
+        console.error('Error fetching active courses:', error);
+        return;
+      }
+
+      // Get new courses in the last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { count: newCoursesCount, error: newCoursesError } = await supabaseAdmin
+        .from('courses')
+        .select('id', { count: 'exact' })
+        .eq('status', 'published')
+        .gte('created_at', thirtyDaysAgo.toISOString());
+
+      if (newCoursesError) {
+        console.error('Error fetching new courses:', newCoursesError);
+      } else {
+        setCoursesTrend(`+${newCoursesCount || 0}`);
+      }
+
+      setActiveCourses(count || 0);
+    } catch (error) {
+      console.error('Unexpected error fetching active courses:', error);
+    }
+  };
+
+  // Function to fetch payment due count
+  const fetchPaymentDue = async () => {
+    try {
+      // Method 1: Count profiles with payment_due status
+      const { data, error, count } = await supabaseAdmin
+        .from('profiles')
+        .select('id', { count: 'exact' })
+        .eq('status', 'payment_due');
+
+      if (error) {
+        console.error('Error fetching payment due from profiles:', error);
+
+        // Fallback method: Count payments with due_soon or overdue status
+        const { data: paymentsData, error: paymentsError, count: paymentsCount } = await supabaseAdmin
+          .from('payments')
+          .select('id', { count: 'exact' })
+          .in('payment_status', ['due_soon', 'overdue']);
+
+        if (paymentsError) {
+          console.error('Error fetching payment due from payments:', paymentsError);
+          return;
+        }
+
+        setPaymentDue(paymentsCount || 0);
+        return;
+      }
+
+      setPaymentDue(count || 0);
+    } catch (error) {
+      console.error('Unexpected error fetching payment due:', error);
+    }
+  };
+
+  // Function to fetch total earnings
+  const fetchTotalEarnings = async () => {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('payments')
+        .select('amount')
+        .eq('payment_status', 'paid');
+
+      if (error) {
+        console.error('Error fetching total earnings:', error);
+        return;
+      }
+
+      // Calculate total earnings
+      const total = data?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
+      setTotalEarnings(total);
+
+      // Calculate earnings trend (last 30 days vs previous 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const sixtyDaysAgo = new Date();
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+      // Last 30 days earnings
+      const { data: last30DaysData, error: last30DaysError } = await supabaseAdmin
+        .from('payments')
+        .select('amount')
+        .eq('payment_status', 'paid')
+        .gte('created_at', thirtyDaysAgo.toISOString());
+
+      // Previous 30 days earnings
+      const { data: previous30DaysData, error: previous30DaysError } = await supabaseAdmin
+        .from('payments')
+        .select('amount')
+        .eq('payment_status', 'paid')
+        .gte('created_at', sixtyDaysAgo.toISOString())
+        .lt('created_at', thirtyDaysAgo.toISOString());
+
+      if (!last30DaysError && !previous30DaysError) {
+        const last30DaysTotal = last30DaysData?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
+        const previous30DaysTotal = previous30DaysData?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 1; // Avoid division by zero
+
+        const percentChange = Math.round((last30DaysTotal - previous30DaysTotal) / previous30DaysTotal * 100);
+        setEarningsTrend(`${percentChange >= 0 ? '+' : ''}${percentChange}%`);
+      }
+    } catch (error) {
+      console.error('Unexpected error fetching total earnings:', error);
+    }
+  };
+
+  // Function to fetch real course data
+  const fetchCourseData = async () => {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('courses')
+        .select('id, name, status')
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) {
+        console.error('Error fetching courses:', error);
+        return;
+      }
+
+      // For each course, get active students count
+      const coursesWithStudents = await Promise.all(data.map(async (course) => {
+        // Get active students for this course
+        const { data: activeStudents, error: activeStudentsError, count: activeStudentsCount } = await supabaseAdmin
+          .from('user_course_progress')
+          .select('user_id', { count: 'exact' })
+          .eq('course_id', course.id)
+          .lt('progress', 100); // Not completed yet
+
+        // Get completed students for this course
+        const { data: completedStudents, error: completedStudentsError, count: completedStudentsCount } = await supabaseAdmin
+          .from('user_course_progress')
+          .select('user_id', { count: 'exact' })
+          .eq('course_id', course.id)
+          .eq('progress', 100); // Completed
+
+        if (activeStudentsError) {
+          console.error(`Error fetching active students for course ${course.id}:`, activeStudentsError);
+        }
+
+        if (completedStudentsError) {
+          console.error(`Error fetching completed students for course ${course.id}:`, completedStudentsError);
+        }
+
+        // Get average rating for this course
+        const { data: ratings, error: ratingsError } = await supabaseAdmin
+          .from('course_ratings')
+          .select('rating')
+          .eq('course_id', course.id);
+
+        let averageRating = 0;
+        if (!ratingsError && ratings && ratings.length > 0) {
+          averageRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+        }
+
+        return {
+          id: course.id,
+          name: course.name,
+          rating: averageRating || 4.5, // Default if no ratings
+          activeStudents: activeStudentsCount || 0,
+          completedStudents: completedStudentsCount || 0
+        };
+      }));
+
+      setCourses(coursesWithStudents);
+    } catch (error) {
+      console.error('Unexpected error fetching course data:', error);
+    }
+  };
 
   useEffect(() => {
     // Only set isAdmin, don't force sidebar state
@@ -128,7 +352,27 @@ export const AdminDashboard = () => {
       observer.observe(el);
     });
 
-    // Simulate real-time updates
+    // Fetch real data
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([
+          fetchTotalStudents(),
+          fetchActiveCourses(),
+          fetchPaymentDue(),
+          fetchTotalEarnings(),
+          fetchCourseData()
+        ]);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+
+    // Simulate real-time updates for activity feed only
     const activityInterval = setInterval(() => {
       const { student, activity } = getRandomActivity();
       setRecentActivity(`${student.name} ${activity}`);
@@ -147,44 +391,21 @@ export const AdminDashboard = () => {
         return newActive.slice(-3); // Keep only last 3 active users
       });
 
-      // Update course active students
-      setCourses(prevCourses => {
-        return prevCourses.map(course => {
-          if (Math.random() > 0.7) {
-            const change = Math.random() > 0.5 ? 1 : -1;
-            const newCount = Math.max(0, course.activeStudents + change);
-            return {
-              ...course,
-              activeStudents: newCount
-            };
-          }
-          return course;
-        });
-      });
-
-      // Random stats updates
-      if (Math.random() > 0.8) {
-        setTotalEarnings(prev => prev + Math.floor(Math.random() * 500));
-      }
-      if (Math.random() > 0.9) {
-        setTotalStudents(prev => prev + 1);
-      }
-      if (Math.random() > 0.85) {
-        setActiveCourses(prev => prev + (Math.random() > 0.5 ? 1 : -1));
-      }
-      if (Math.random() > 0.7) {
-        setPaymentDue(prev => Math.max(0, prev + (Math.random() > 0.5 ? 1 : -1)));
-      }
-
       // Clear activity message after 3 seconds
       setTimeout(() => setRecentActivity(null), 3000);
     }, 4000);
 
+    // Set up refresh interval for real data (every 5 minutes)
+    const dataRefreshInterval = setInterval(() => {
+      fetchData();
+    }, 5 * 60 * 1000);
+
     return () => {
       observer.disconnect();
       clearInterval(activityInterval);
+      clearInterval(dataRefreshInterval);
     };
-  }, [setExpanded, setIsAdmin]);
+  }, [setIsAdmin]);
 
   const handleAccessToggle = (studentId: string, currentStatus: boolean) => {
     // Add logic to toggle student access
@@ -224,27 +445,27 @@ export const AdminDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-on-scroll">
               <StatCard
                 title="Total Earnings"
-                value={`${totalEarnings} MAD`}
+                value={isLoading ? "Loading..." : `${totalEarnings} MAD`}
                 icon={<DollarSign className="h-5 w-5 text-green-500" />}
-                trend={{ value: "+15%", label: "vs last month" }}
+                trend={{ value: earningsTrend, label: "vs last month" }}
               />
               <StatCard
                 title="Total Students"
-                value={totalStudents.toString()}
+                value={isLoading ? "Loading..." : totalStudents.toString()}
                 icon={<Users className="h-5 w-5 text-cyber-primary" />}
-                trend={{ value: "+2", label: "new students" }}
+                trend={{ value: studentsTrend, label: "new students" }}
               />
               <StatCard
                 title="Active Courses"
-                value={activeCourses.toString()}
+                value={isLoading ? "Loading..." : activeCourses.toString()}
                 icon={<BookOpen className="h-5 w-5 text-blue-500" />}
-                trend={{ value: "+5", label: "new courses" }}
+                trend={{ value: coursesTrend, label: "new courses" }}
               />
               <StatCard
                 title="Payment Due"
-                value={paymentDue.toString()}
+                value={isLoading ? "Loading..." : paymentDue.toString()}
                 icon={<AlertCircle className="h-5 w-5 text-red-500" />}
-                trend={{ value: "-2", label: "vs last week" }}
+                trend={{ value: paymentDue > 0 ? `${paymentDue}` : "0", label: "payments" }}
               />
             </div>
 

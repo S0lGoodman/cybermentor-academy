@@ -25,33 +25,59 @@ export const Login = () => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
-    
+
     try {
       await signIn(email, password);
-      
+
       // After successful login, check user role and redirect accordingly
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // EMERGENCY FIX: Check if user is admin by email domain first
+        const isAdminByEmail = user.email?.endsWith('@cybermentor.ma') || false;
+
+        // Then check the profile
         const { data: profile } = await supabase
           .from('profiles')
           .select('role, status')
           .eq('id', user.id)
           .single();
-        
-        // Check if account is suspended
+
+        // Check if account is suspended or has payment due
         if (profile?.status === 'suspended') {
           throw new Error("لا يمكنك الوصول إلى الأكاديمية في الوقت الحالي! يرجى الاتصال بالدعم");
         }
-        
+
+        // Check if account has payment due
+        if (profile?.status === 'payment_due') {
+          throw new Error("لا يمكنك الوصول إلى الأكاديمية بسبب وجود دفعات مستحقة! يرجى تسوية المدفوعات المستحقة");
+        }
+
+        // EMERGENCY FIX: Determine role with multiple checks
+        let userRole = 'student';
+
+        // 1. Check if admin by email domain
+        if (isAdminByEmail) {
+          userRole = 'admin';
+          // Update profile to ensure it's marked as admin
+          await supabase
+            .from('profiles')
+            .update({ role: 'admin' })
+            .eq('id', user.id);
+        }
+        // 2. Check profile role
+        else if (profile?.role === 'admin') {
+          userRole = 'admin';
+        }
+
         // Set localStorage values
         localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userRole', profile?.role || 'student');
-        
+        localStorage.setItem('userRole', userRole);
+
         // Set success state and delay navigation for animation
         setIsSuccess(true);
         await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        if (profile?.role === 'admin') {
+
+        if (userRole === 'admin') {
           setIsAdmin(true);
           navigate("/admin/dashboard");
         } else {
@@ -67,42 +93,42 @@ export const Login = () => {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="absolute inset-0 bg-gradient-to-br from-sky-500/20 via-background to-teal-500/20" 
+        className="absolute inset-0 bg-gradient-to-br from-sky-500/20 via-background to-teal-500/20"
       />
-      
+
       <Card className="w-full max-w-md mx-4 relative backdrop-blur-xl bg-white/10 dark:bg-black/10 border-white/20 dark:border-white/10 shadow-lg ring-1 ring-black/5 dark:ring-white/10 overflow-hidden z-10">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.5 }}
-          className="absolute inset-0 bg-gradient-to-br from-white/30 dark:from-white/10 to-transparent rounded-lg" 
+          className="absolute inset-0 bg-gradient-to-br from-white/30 dark:from-white/10 to-transparent rounded-lg"
         />
         <CardHeader className="space-y-4 text-center relative">
-          <motion.div 
+          <motion.div
             className="flex justify-center"
             animate={
-              isSuccess 
+              isSuccess
                 ? { scale: [1, 1.2, 1], rotate: [0, 360, 360] }
-                : isLoading 
+                : isLoading
                   ? { scale: 0.8 }
                   : { scale: 1 }
             }
-            transition={{ 
+            transition={{
               duration: isSuccess ? 1.5 : 0.5,
               ease: isSuccess ? "easeInOut" : "easeOut"
             }}
           >
-            <img 
-              src="/logo.png" 
-              alt="Cyber Mentor Academy" 
+            <img
+              src="/logo.png"
+              alt="Cyber Mentor Academy"
               className="w-24 h-24 object-contain"
             />
           </motion.div>
           <AnimatePresence mode="wait">
             {!isSuccess && (
-              <motion.div 
+              <motion.div
                 className="space-y-2"
                 initial={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -125,7 +151,7 @@ export const Login = () => {
                 <motion.div
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
-                  transition={{ 
+                  transition={{
                     type: "spring",
                     stiffness: 200,
                     damping: 15
@@ -149,16 +175,16 @@ export const Login = () => {
         <CardContent className="relative">
           <AnimatePresence mode="wait">
             {!isSuccess && (
-              <motion.form 
-                onSubmit={handleLogin} 
+              <motion.form
+                onSubmit={handleLogin}
                 className="space-y-4"
                 initial={{ opacity: 1 }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <motion.div 
+                <motion.div
                   className="space-y-2"
-                  animate={isLoading ? { 
+                  animate={isLoading ? {
                     opacity: 0.5,
                     y: -10,
                     transition: { duration: 0.2 }
@@ -177,9 +203,9 @@ export const Login = () => {
                     disabled={isLoading}
                   />
                 </motion.div>
-                <motion.div 
+                <motion.div
                   className="space-y-2"
-                  animate={isLoading ? { 
+                  animate={isLoading ? {
                     opacity: 0.5,
                     y: -10,
                     transition: { duration: 0.2, delay: 0.1 }
@@ -210,7 +236,7 @@ export const Login = () => {
                   </motion.div>
                 )}
                 <motion.div
-                  animate={isLoading ? { 
+                  animate={isLoading ? {
                     scale: 0.95,
                     transition: { duration: 0.2 }
                   } : {
@@ -237,4 +263,4 @@ export const Login = () => {
   );
 };
 
-export default Login; 
+export default Login;

@@ -12,6 +12,9 @@ export interface Student {
   role: string;
   suspended_until?: string | null;
   suspension_reason?: string | null;
+  // Additional fields (non-payment related)
+  program_start_date?: string | null;
+  months_paid?: number | null;
 }
 
 export interface StudentFilters {
@@ -32,4 +35,4 @@ export interface BulkAction {
     duration?: number;
     message?: string;
   };
-} 
+}

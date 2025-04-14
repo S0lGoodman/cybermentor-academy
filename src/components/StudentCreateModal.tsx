@@ -5,6 +5,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useToast } from "./ui/use-toast";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { v4 as uuidv4 } from 'uuid';
 
 interface StudentCreateModalProps {
   isOpen: boolean;
@@ -25,43 +26,131 @@ export function StudentCreateModal({ isOpen, onClose, onSuccess }: StudentCreate
     setIsLoading(true);
 
     try {
-      // Send invite email which will create the user if they don't exist
-      const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(formData.email);
+      // DIRECT APPROACH: Create a profile record directly
+      // Generate a UUID for the student
+      const studentId = uuidv4();
+      console.log('Creating profile with ID:', studentId);
 
-      if (inviteError) throw inviteError;
+      // First, create a student record with all fields
+      const { error: studentError } = await supabaseAdmin
+        .from('students')
+        .insert({
+          id: studentId,
+          email: formData.email,
+          name: formData.name,
+          status: 'invited',
+          role: 'student',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          program_start_date: new Date().toISOString(),
+          progress: 0,
+          enrolled_courses: 0,
+          months_paid: 0
+          // No payment-related fields
+        });
 
-      // Get the user data after invitation
-      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers({
-        filter: {
-          email: formData.email
-        }
-      });
+      if (studentError) {
+        console.error('Student creation error:', studentError);
+        throw studentError;
+      }
 
-      if (userError) throw userError;
+      console.log('Student created successfully');
 
-      const user = userData.users[0];
-      if (user) {
-        // Update user metadata
-        await supabaseAdmin.auth.admin.updateUserById(user.id, {
-          user_metadata: {
+      // Then, create a profile record for admin dashboard compatibility
+      try {
+        const { error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .insert({
+            id: studentId,
+            email: formData.email,
             name: formData.name,
-            is_new_user: true
+            role: 'student',
+            status: 'invited',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          // Continue anyway - the student was created
+        } else {
+          console.log('Profile created successfully');
+        }
+      } catch (profileError) {
+        console.error('Profile creation exception:', profileError);
+        // Continue anyway - the student was created
+      }
+
+      // This block is now redundant - we already checked for studentError above
+      // Removing it to avoid duplicate code
+
+      // Send an invite email using a more robust approach
+      try {
+        console.log('Sending invite email to:', formData.email);
+
+        // First try the admin invite method
+        const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(formData.email, {
+          data: {
+            name: formData.name,
+            role: 'student'
           }
         });
 
-        // Create or update the profile using admin client
-        const { error: profileError } = await supabaseAdmin
-          .from('profiles')
-          .upsert({ 
-            id: user.id,
-            name: formData.name,
-            role: 'student',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+        if (inviteError) {
+          console.error('Admin invite error:', inviteError);
+
+          // If admin invite fails, try creating the user directly
+          console.log('Trying alternative approach: creating user directly');
+          const { error: createUserError } = await supabaseAdmin.auth.admin.createUser({
+            email: formData.email,
+            email_confirm: true,
+            user_metadata: {
+              name: formData.name,
+              role: 'student'
+            },
+            password: Math.random().toString(36).slice(-10) + Math.random().toString(36).toUpperCase().slice(-2) + '!1'
+          });
+
+          if (createUserError) {
+            console.error('Create user error:', createUserError);
+            throw createUserError;
+          }
+
+          // Then send a password reset email
+          const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'recovery',
             email: formData.email
           });
 
-        if (profileError) throw profileError;
+          if (resetError) {
+            console.error('Password reset error:', resetError);
+            throw resetError;
+          }
+
+          console.log('User created and password reset email sent');
+        } else {
+          console.log('Invite sent successfully');
+        }
+
+        // Update the student status to 'invited'
+        const { error: updateError } = await supabaseAdmin
+          .from('students')
+          .update({ status: 'invited' })
+          .eq('id', studentId);
+
+        if (updateError) {
+          console.error('Status update error:', updateError);
+          // Continue anyway - the invite was sent
+        }
+      } catch (inviteError: any) {
+        console.error('Invitation process error:', inviteError);
+
+        // Show a warning but don't fail the operation
+        toast({
+          title: "Warning",
+          description: `Student was created but invitation email could not be sent: ${inviteError.message || 'Unknown error'}`,
+          variant: "destructive",
+        });
       }
 
       toast({
@@ -73,9 +162,23 @@ export function StudentCreateModal({ isOpen, onClose, onSuccess }: StudentCreate
       onClose();
       setFormData({ email: "", name: "" });
     } catch (error: any) {
+      console.error('Student creation error:', error);
+
+      // Try to get more detailed error information
+      let errorMessage = "Failed to add student";
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      if (error.details) {
+        errorMessage += " - " + error.details;
+      }
+      if (error.hint) {
+        errorMessage += " (Hint: " + error.hint + ")";
+      }
+
       toast({
         title: "Error",
-        description: error.message || "Failed to invite student",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -131,4 +234,4 @@ export function StudentCreateModal({ isOpen, onClose, onSuccess }: StudentCreate
       </DialogContent>
     </Dialog>
   );
-} 
+}
