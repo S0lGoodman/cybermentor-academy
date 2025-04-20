@@ -115,9 +115,8 @@ export const AdminDashboard = () => {
   const fetchTotalStudents = async () => {
     try {
       const { data, error, count } = await supabaseAdmin
-        .from('profiles')
-        .select('id', { count: 'exact' })
-        .eq('role', 'student');
+        .from('students')
+        .select('id', { count: 'exact' });
 
       if (error) {
         console.error('Error fetching total students:', error);
@@ -129,9 +128,8 @@ export const AdminDashboard = () => {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const { count: newStudentsCount, error: newStudentsError } = await supabaseAdmin
-        .from('profiles')
+        .from('students')
         .select('id', { count: 'exact' })
-        .eq('role', 'student')
         .gte('created_at', thirtyDaysAgo.toISOString());
 
       if (newStudentsError) {
@@ -184,27 +182,40 @@ export const AdminDashboard = () => {
   // Function to fetch payment due count
   const fetchPaymentDue = async () => {
     try {
-      // Method 1: Count profiles with payment_due status
+      // Count students with payment_due status
       const { data, error, count } = await supabaseAdmin
-        .from('profiles')
+        .from('students')
         .select('id', { count: 'exact' })
         .eq('status', 'payment_due');
 
       if (error) {
-        console.error('Error fetching payment due from profiles:', error);
+        console.error('Error fetching payment due from students:', error);
 
-        // Fallback method: Count payments with due_soon or overdue status
-        const { data: paymentsData, error: paymentsError, count: paymentsCount } = await supabaseAdmin
-          .from('payments')
+        // Fallback method: Check profiles table
+        const { data: profilesData, error: profilesError, count: profilesCount } = await supabaseAdmin
+          .from('profiles')
           .select('id', { count: 'exact' })
-          .in('payment_status', ['due_soon', 'overdue']);
+          .eq('status', 'payment_due');
 
-        if (paymentsError) {
-          console.error('Error fetching payment due from payments:', paymentsError);
+        if (profilesError) {
+          console.error('Error fetching payment due from profiles:', profilesError);
+
+          // Second fallback: Count payments with due_soon or overdue status
+          const { data: paymentsData, error: paymentsError, count: paymentsCount } = await supabaseAdmin
+            .from('payments')
+            .select('id', { count: 'exact' })
+            .in('payment_status', ['due_soon', 'overdue']);
+
+          if (paymentsError) {
+            console.error('Error fetching payment due from payments:', paymentsError);
+            return;
+          }
+
+          setPaymentDue(paymentsCount || 0);
           return;
         }
 
-        setPaymentDue(paymentsCount || 0);
+        setPaymentDue(profilesCount || 0);
         return;
       }
 

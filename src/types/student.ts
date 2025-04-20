@@ -1,9 +1,13 @@
-export type StudentStatus = 'active' | 'inactive' | 'invited' | 'suspended' | 'all';
+export type StudentStatus = 'active' | 'inactive' | 'invited' | 'suspended' | 'payment_due' | 'all';
 
 export interface Student {
   id: string;
   email: string;
-  full_name: string;
+  full_name?: string;
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
+  whatsapp_url?: string;
   created_at: string;
   last_active?: string;
   status: StudentStatus;

@@ -6,7 +6,7 @@ import { User } from "@supabase/supabase-js";
 import { StudentActionMenu } from "@/components/students/StudentActionMenu";
 import { StudentFiltersBar } from "@/components/students/StudentFilters";
 import { StudentBulkActions } from "@/components/students/StudentBulkActions";
-import { StudentCreateModal } from "@/components/StudentCreateModal";
+import { StudentCreate } from "@/components/StudentCreate";
 import { AdminNavbar } from "@/components/Sidebar";
 import { Navbar } from "@/components/Navbar";
 import { useSidebar } from "@/components/Sidebar";
@@ -70,6 +70,10 @@ export default function Students() {
             id: '1',
             email: 'student1@example.com',
             full_name: 'Student One',
+            first_name: 'Student',
+            last_name: 'One',
+            phone_number: '0612345678',
+            whatsapp_url: 'https://wa.me/212612345678',
             created_at: new Date().toISOString(),
             last_active: new Date().toISOString(),
             status: 'active' as StudentStatus,
@@ -81,6 +85,10 @@ export default function Students() {
             id: '2',
             email: 'student2@example.com',
             full_name: 'Student Two',
+            first_name: 'Student',
+            last_name: 'Two',
+            phone_number: '0687654321',
+            whatsapp_url: 'https://wa.me/212687654321',
             created_at: new Date().toISOString(),
             last_active: new Date().toISOString(),
             status: 'invited' as StudentStatus,
@@ -100,6 +108,10 @@ export default function Students() {
             id: '1',
             email: 'student1@example.com',
             full_name: 'Student One',
+            first_name: 'Student',
+            last_name: 'One',
+            phone_number: '0612345678',
+            whatsapp_url: 'https://wa.me/212612345678',
             created_at: new Date().toISOString(),
             last_active: new Date().toISOString(),
             status: 'active' as StudentStatus,
@@ -129,6 +141,10 @@ export default function Students() {
           id: student.id,
           email: student.email,
           full_name: student.name || 'N/A',
+          first_name: student.first_name,
+          last_name: student.last_name,
+          phone_number: student.phone_number,
+          whatsapp_url: student.whatsapp_url,
           created_at: student.created_at || new Date().toISOString(),
           last_active: student.last_active || student.updated_at || new Date().toISOString(),
           status: student.status as StudentStatus || 'invited',
@@ -152,6 +168,10 @@ export default function Students() {
           id: '1',
           email: 'student1@example.com',
           full_name: 'Student One',
+          first_name: 'Student',
+          last_name: 'One',
+          phone_number: '0612345678',
+          whatsapp_url: 'https://wa.me/212612345678',
           created_at: new Date().toISOString(),
           last_active: new Date().toISOString(),
           status: 'active' as StudentStatus,
@@ -177,8 +197,12 @@ export default function Students() {
   }, [filters]);
 
   const filteredStudents = students.filter(student => {
-    const matchesSearch = student.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      (student.full_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (student.first_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (student.last_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (student.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (student.phone_number?.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesStatus = selectedStatus === "all" || student.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });
@@ -406,6 +430,7 @@ export default function Students() {
       case 'active':
         return 'success'; // Green
       case 'suspended':
+      case 'payment_due':
         return 'destructive'; // Red
       case 'inactive':
         return 'secondary'; // Gray
@@ -474,6 +499,7 @@ export default function Students() {
                     </TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Progress</TableHead>
                     <TableHead>Joined</TableHead>
@@ -508,8 +534,24 @@ export default function Students() {
                             }}
                           />
                         </TableCell>
-                        <TableCell>{student.full_name || "N/A"}</TableCell>
+                        <TableCell>
+                          {student.first_name && student.last_name
+                            ? `${student.first_name} ${student.last_name}`
+                            : student.full_name || 'N/A'}
+                        </TableCell>
                         <TableCell>{student.email}</TableCell>
+                        <TableCell>
+                          {student.phone_number ? (
+                            <a
+                              href={student.whatsapp_url || `https://wa.me/212${student.phone_number.replace(/^0/, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              {student.phone_number}
+                            </a>
+                          ) : 'N/A'}
+                        </TableCell>
                         <TableCell>
                           <Badge variant={getStatusBadgeVariant(student.status)}>
                             {formatStatus(student.status)}
@@ -544,7 +586,7 @@ export default function Students() {
               </Table>
             </div>
 
-            <StudentCreateModal
+            <StudentCreate
               isOpen={isCreateModalOpen}
               onClose={() => setIsCreateModalOpen(false)}
               onSuccess={fetchStudents}
